@@ -3,7 +3,10 @@
     "module": "ESNext",
     "target": "es5",
     "sourceMap": true,
-    "strict": true
+    "strict": true,
+    "resolveJsonModule": true,
+    "lib": ["ESNext", "dom"],
+    "moduleResolution": "node"
   },
   "exclude": [
     "node_modules"
