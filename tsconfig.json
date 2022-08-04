@@ -5,8 +5,10 @@
     "sourceMap": true,
     "strict": true,
     "resolveJsonModule": true,
+    "allowJs": true,
     "lib": ["ESNext", "dom"],
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "esModuleInterop": true,
   },
   "exclude": [
     "node_modules"

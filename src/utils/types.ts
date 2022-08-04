@@ -1,5 +1,7 @@
 interface Config {
-	regs: string[]
+	regs: {
+	[key: string]: number
+}
 	mem: {
 		[key: string]: number
 	}

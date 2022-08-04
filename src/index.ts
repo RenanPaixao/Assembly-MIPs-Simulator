@@ -1,18 +1,34 @@
-/** Create all numeric registers and no numeric also as entries to create an object to manipulate them.
- * These registers are with 0 as value.
- */
-const numericRegisters = Array(32).fill(0).map((_, i) => [`$${i}`, 0])
-const nonNumericRegisters = [['pc', 0], ['hi', 0], ['lo', 0]]
+import { initializeRegisters, removeInvalidRegisters } from './utils/registers.js'
+import * as Types from './utils/types'
+import { readFileSync } from 'fs'
 
-const registers: Record<string, any> = Object.fromEntries([...numericRegisters, ...nonNumericRegisters])
+let allRegisters = initializeRegisters()
+let memory: Record<string, any> = {}
+let data: Record<string, any> = {}
 
-/** Add values different from 0 to the registers that need it. **/
-registers.$28 = 268468224
-registers.$29 = 2147479548
-registers.lo = 4194304
+const add = readFileSync('./src/input/Add.input.json').toString()
+
+const json: Types.Input = JSON.parse(add)
+
+/** --------------------------------------------------
+ *
+ * Initialize the registers, memory and data with the values from the input.
+ *
+ * ---------------------------------------------------**/
+
+Object.entries(json.config?.regs ?? {}).forEach(([key, value]) => {
+	allRegisters[key] = value
+})
+
+Object.entries(json.config?.mem ?? {}).forEach(([key, value]) => {
+	memory[key] = value
+})
+
+Object.entries(json.data ?? {}).forEach(([key, value]) => {
+	data[key] = value
+})
 
 /** -------------------------------------------------- **/
-
 
 
 
