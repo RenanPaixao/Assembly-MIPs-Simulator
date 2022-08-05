@@ -15,13 +15,7 @@ Object.entries((_b = (_a = json.config) === null || _a === void 0 ? void 0 : _a.
     var key = _a[0], value = _a[1];
     allRegisters[key] = value;
 });
-Object.entries((_d = (_c = json.config) === null || _c === void 0 ? void 0 : _c.mem) !== null && _d !== void 0 ? _d : {}).forEach(function (_a) {
-    var key = _a[0], value = _a[1];
-    memory[key] = value;
-});
-Object.entries((_e = json.data) !== null && _e !== void 0 ? _e : {}).forEach(function (_a) {
-    var key = _a[0], value = _a[1];
-    data[key] = value;
-});
+memory = (_d = (_c = json.config) === null || _c === void 0 ? void 0 : _c.mem) !== null && _d !== void 0 ? _d : {};
+data = (_e = json.data) !== null && _e !== void 0 ? _e : {};
 /** -------------------------------------------------- **/
 //# sourceMappingURL=index.js.map

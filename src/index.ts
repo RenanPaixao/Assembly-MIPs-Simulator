@@ -1,4 +1,6 @@
 import { initializeRegisters, removeInvalidRegisters } from './utils/registers.js'
+// @ts-ignore
+import hexToBinary from 'hex-to-binary'
 import * as Types from './utils/types'
 import { readFileSync } from 'fs'
 
@@ -20,16 +22,11 @@ Object.entries(json.config?.regs ?? {}).forEach(([key, value]) => {
 	allRegisters[key] = value
 })
 
-Object.entries(json.config?.mem ?? {}).forEach(([key, value]) => {
-	memory[key] = value
-})
+memory = json.config?.mem ?? {}
 
-Object.entries(json.data ?? {}).forEach(([key, value]) => {
-	data[key] = value
-})
+data = json.data ?? {}
 
 /** -------------------------------------------------- **/
-
 
 
 
