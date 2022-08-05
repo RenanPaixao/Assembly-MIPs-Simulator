@@ -21,6 +21,15 @@ const instructionsOpCode = {
 	'000000': 'opZero' // opZero indicate instructions R type
 }
 
+function divInstructionI(instruction: string) {
+	return {
+		opCode: getOpCode(instruction),
+		rs: instruction.substring(6, 11),
+		rt: instruction.substring(11, 16),
+		constant: instruction.substring(16, 32)
+	}
+}
+
 
 const functions = {
 	'100000': 'add',
@@ -46,6 +55,46 @@ const functions = {
 	'100011': 'subu',
 	'001100': 'syscall',
 	'100110': 'xor',
+}
+
+function getOpCode(instruction: string) {
+	return instruction.substring(0, 6)
+}
+
+function objectToDecimal(object: any): {opcode: number, rs: number, rt: number, constant: number} {
+	// @ts-ignore
+	const objectTransformedInEntries = Object.entries(object).map(([key, value]) => [key, parseInt(value, 2)])
+	
+	return Object.fromEntries(objectTransformedInEntries)
+}
+
+export function decodeInstruction(instruction: string) {
+	const instructionName = instructionsOpCode[getOpCode(instruction)]
+	
+	if(getOpCode(instruction) !== '000000') {
+		const instructionI = divInstructionI(instruction)
+		
+		switch(instructionI.opCode) {
+			case '001000':
+				return addi(instruction)
+			default:
+				console.log('------------------------------')
+				// throw new Error('Instruction not found')
+		}
+	}
+	
+}
+
+//criar funções de instruções que faltam
+//passo a passo pra testar
+// 1. adiciona o case no switch da função decodeInstruction
+// 2. a função decode instruction está sendo chamada dentro no index.ts
+// 3. usa um console.log no index.ts usando a função com uma instrução qualquer
+function addi(instruction: string) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	
+	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rs}, $${objectTransformed.rt}, ${objectTransformed.constant}`
 }
 
 

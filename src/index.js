@@ -1,5 +1,6 @@
 var _a, _b, _c, _d, _e, _f;
 import { initializeRegisters } from './utils/registers.js';
+import { decodeInstruction } from './utils/instructions.js';
 // @ts-ignore
 import hexToBinary from 'hex-to-binary';
 import { readFileSync } from 'fs';
@@ -29,6 +30,6 @@ Object.entries((_f = (_e = input.data) === null || _e === void 0 ? void 0 : _e.d
 input.text = input.text.map(function (value) {
     return hexToBinary(value.replace('0x', ''));
 });
-console.log(input.text);
+console.log(decodeInstruction('00100010000100010000000000000001'));
 /** -------------------------------------------------- **/
 //# sourceMappingURL=index.js.map

@@ -1,4 +1,5 @@
 import { initializeRegisters, removeInvalidRegisters } from './utils/registers.js'
+import { decodeInstruction } from './utils/instructions.js'
 // @ts-ignore
 import hexToBinary from 'hex-to-binary'
 import * as Types from './utils/types'
@@ -35,7 +36,8 @@ input.text = input.text.map(value =>{
 	return hexToBinary(value.replace('0x', ''))
 })
 
-console.log(input.text)
+console.log(decodeInstruction('00100010000100010000000000000001'))
+
 
 /** -------------------------------------------------- **/
 
