@@ -23,3 +23,4 @@ export function removeInvalidRegisters(registers: Record<string, any>) {
 	
 	return localRegisters
 }
+
