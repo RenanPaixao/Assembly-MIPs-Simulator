@@ -77,8 +77,10 @@ export function decodeInstruction(instruction) {
         }
     }
 }
-//criar funções de instruções que faltam
-//passo a passo pra testar
+// Lembrar de usar o script antes de codar (yarn tsc:w)
+// pra rodar o arquivo, verifica se o terminal tá na pasta raiz (Assembly-MIPs-Simulator-in-Node) e roda node src
+//Criar funções de instruções que faltam
+//Passo a passo pra testar
 // 1. adiciona o case no switch da função decodeInstruction
 // 2. a função decode instruction está sendo chamada dentro no index.ts
 // 3. usa um console.log no index.ts usando a função com uma instrução qualquer
