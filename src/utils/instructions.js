@@ -64,13 +64,13 @@ function objectToDecimal(object) {
     });
     return Object.fromEntries(objectTransformedInEntries);
 }
-export function decodeInstruction(instruction) {
+export function decodeInstruction(instruction, allRegisters) {
     var instructionName = instructionsOpCode[getOpCode(instruction)];
     if (getOpCode(instruction) !== '000000') {
         var instructionI = divInstructionI(instruction);
         switch (instructionI.opCode) {
             case '001000':
-                return addi(instruction);
+                return addi(instruction, allRegisters);
             default:
                 console.log('------------------------------');
             // throw new Error('Instruction not found')
@@ -84,9 +84,15 @@ export function decodeInstruction(instruction) {
 // 1. adiciona o case no switch da função decodeInstruction
 // 2. a função decode instruction está sendo chamada dentro no index.ts
 // 3. usa um console.log no index.ts usando a função com uma instrução qualquer
-function addi(instruction) {
+/**
+ * Returns a parsed instruction
+ */
+function addi(instruction, allRegisters) {
     var divInstruction = divInstructionI(instruction);
     var objectTransformed = objectToDecimal(divInstruction);
-    return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant);
+    // Executa a operação
+    var operationResult = allRegisters["$".concat(objectTransformed.rs)] + objectTransformed.constant;
+    allRegisters["$".concat(objectTransformed.rt)] = operationResult;
+    return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.constant);
 }
 //# sourceMappingURL=instructions.js.map

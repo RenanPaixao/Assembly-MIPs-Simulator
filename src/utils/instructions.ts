@@ -68,7 +68,7 @@ function objectToDecimal(object: any): {opcode: number, rs: number, rt: number, 
 	return Object.fromEntries(objectTransformedInEntries)
 }
 
-export function decodeInstruction(instruction: string) {
+export function decodeInstruction(instruction: string, allRegisters: Record<string, any>) {
 	const instructionName = instructionsOpCode[getOpCode(instruction)]
 	
 	if(getOpCode(instruction) !== '000000') {
@@ -76,7 +76,7 @@ export function decodeInstruction(instruction: string) {
 		
 		switch(instructionI.opCode) {
 			case '001000':
-				return addi(instruction)
+				return addi(instruction, allRegisters)
 			default:
 				console.log('------------------------------')
 				// throw new Error('Instruction not found')
@@ -94,11 +94,19 @@ export function decodeInstruction(instruction: string) {
 // 1. adiciona o case no switch da função decodeInstruction
 // 2. a função decode instruction está sendo chamada dentro no index.ts
 // 3. usa um console.log no index.ts usando a função com uma instrução qualquer
-function addi(instruction: string) {
+/**
+ * Returns a parsed instruction
+ */
+function addi(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionI(instruction)
 	const objectTransformed = objectToDecimal(divInstruction)
 	
-	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rs}, $${objectTransformed.rt}, ${objectTransformed.constant}`
+	// Executa a operação
+	const operationResult = allRegisters[`$${objectTransformed.rs}`] + objectTransformed.constant
+	
+	allRegisters[`$${objectTransformed.rt}`] = operationResult
+	
+	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rt}, $${objectTransformed.rs}, ${objectTransformed.constant}`
 }
 
 
