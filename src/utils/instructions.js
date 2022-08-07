@@ -17,8 +17,8 @@ var instructionsOpCode = {
     '101000': 'sb',
     '001010': 'slti',
     '101011': 'sw',
-    '001110': 'xori',
-    '000000': 'opZero' // opZero indicate instructions R type
+    '001110': 'xori'
+    //'000000': 'opZero' // opZero indicate instructions R type
 };
 function divInstructionI(instruction) {
     return {
@@ -37,7 +37,7 @@ var functions = {
     '001000': 'jr',
     '010000': 'mfhi',
     '010010': 'mflo',
-    '0110000': 'mult',
+    '011000': 'mult',
     '011001': 'multu',
     '100111': 'nor',
     '100101': 'or',
@@ -53,10 +53,52 @@ var functions = {
     '001100': 'syscall',
     '100110': 'xor',
 };
+function divInstructionR(instruction) {
+    return {
+        opCode: getOpCode(instruction),
+        rs: instruction.substring(6, 11),
+        rt: instruction.substring(11, 16),
+        rd: instruction.substring(16, 21),
+        shift: instruction.substring(21, 26),
+        opcodeExtension: instruction.substring(26, 32)
+    };
+}
+function checkOverflow(op, value1, value2) {
+    var minValue = Number.MIN_VALUE;
+    var maxValue = Number.MAX_VALUE;
+    var cont1 = value1;
+    var cont2 = value2;
+    switch (op) {
+        case '+':
+            if ((cont1 + cont2) > maxValue || (cont1 + cont2) < minValue) {
+                return true;
+            }
+            break;
+        case '-':
+            if ((cont1 - cont2) > maxValue || (cont1 - cont2) < minValue) {
+                return true;
+            }
+            break;
+        default:
+            break;
+    }
+    return false;
+}
 function getOpCode(instruction) {
     return instruction.substring(0, 6);
 }
+function getOpcodeExtension(instruction) {
+    return instruction.substring(26, 32);
+}
 function objectToDecimal(object) {
+    // @ts-ignore
+    var objectTransformedInEntries = Object.entries(object).map(function (_a) {
+        var key = _a[0], value = _a[1];
+        return [key, parseInt(value, 2)];
+    });
+    return Object.fromEntries(objectTransformedInEntries);
+}
+function objectToDecimalR(object) {
     // @ts-ignore
     var objectTransformedInEntries = Object.entries(object).map(function (_a) {
         var key = _a[0], value = _a[1];
@@ -71,9 +113,47 @@ export function decodeInstruction(instruction, allRegisters) {
         switch (instructionI.opCode) {
             case '001000':
                 return addi(instruction, allRegisters);
+                break;
+            case '001001':
+                return addiu(instruction, allRegisters);
+                break;
+            case '001100':
+                return andi(instruction, allRegisters);
+                break;
             default:
                 console.log('------------------------------');
             // throw new Error('Instruction not found')
+        }
+    }
+    else {
+        var instructionR = divInstructionR(instruction);
+        switch (instructionR.opcodeExtension) {
+            case '100000':
+                return add(instruction, allRegisters);
+                break;
+            case '100001':
+                return addu(instruction, allRegisters);
+                break;
+            case '100010':
+                return sub(instruction, allRegisters);
+                break;
+            case '100011':
+                return subu(instruction, allRegisters);
+                break;
+            case '011000':
+                return mult(instruction, allRegisters);
+                break;
+            case '011001':
+                return multu(instruction, allRegisters);
+                break;
+            case '010010':
+                return mflo(instruction, allRegisters);
+                break;
+            case '010000':
+                return mfhi(instruction, allRegisters);
+                break;
+            default:
+                console.log('---------------------------');
         }
     }
 }
@@ -87,12 +167,87 @@ export function decodeInstruction(instruction, allRegisters) {
 /**
  * Returns a parsed instruction
  */
+//Funções para as instruções tipo I
 function addi(instruction, allRegisters) {
     var divInstruction = divInstructionI(instruction);
     var objectTransformed = objectToDecimal(divInstruction);
-    // Executa a operação
+    //Precisa adicionar a checagem de overflow
     var operationResult = allRegisters["$".concat(objectTransformed.rs)] + objectTransformed.constant;
     allRegisters["$".concat(objectTransformed.rt)] = operationResult;
     return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.constant);
+}
+function addiu(instruction, allRegisters) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var operationResult = allRegisters["$".concat(objectTransformed.rs)] + objectTransformed.constant;
+    allRegisters["$".concat(objectTransformed.rt)] = operationResult;
+    return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.constant);
+}
+function andi(instruction, allRegisters) {
+    var divInstruction = divInstructionI(instruction);
+    //const objectTransformed = objectToDecimal(divInstruction)
+}
+/* ----------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------- */
+//Funções para as instruções tipo R
+function add(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    //Precisa adicionar a checagem de overflow
+    var operationResult = allRegisters["$".concat(objectTransformed.rs)] + allRegisters["$".concat(objectTransformed.rt)];
+    allRegisters["$".concat(objectTransformed.rd)] = operationResult;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.rt);
+}
+function addu(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    var operationResult = allRegisters["$".concat(objectTransformed.rs)] + allRegisters["$".concat(objectTransformed.rt)];
+    allRegisters["$".concat(objectTransformed.rd)] = operationResult;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.rt);
+}
+function sub(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    //Precisa adicionar a checagem de overflow
+    var operationResult = allRegisters["$".concat(objectTransformed.rs)] - allRegisters["$".concat(objectTransformed.rt)];
+    allRegisters["$".concat(objectTransformed.rd)] = operationResult;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.rt);
+}
+function subu(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    var operationResult = allRegisters["$".concat(objectTransformed.rs)] - allRegisters["$".concat(objectTransformed.rt)];
+    allRegisters["$".concat(objectTransformed.rd)] = operationResult;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.rt);
+}
+function mult(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    //Precisa adicionar a condição de overflow
+    var operationResult = allRegisters["$".concat(objectTransformed.rs)] * allRegisters["$".concat(objectTransformed.rt)];
+    allRegisters['lo'] = operationResult;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
+}
+function multu(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    var operationResult = allRegisters["$".concat(objectTransformed.rs)] * allRegisters["$".concat(objectTransformed.rt)];
+    allRegisters['lo'] = operationResult;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
+}
+function mflo(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    allRegisters["$".concat(objectTransformed.rd)] = allRegisters['lo'];
+    return "$".concat(objectTransformed.rd);
+}
+function mfhi(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    allRegisters["$".concat(objectTransformed.rd)] = allRegisters['hi'];
+    return "$".concat(objectTransformed.rd);
 }
 //# sourceMappingURL=instructions.js.map

@@ -30,7 +30,7 @@ Object.entries((_f = (_e = input.data) === null || _e === void 0 ? void 0 : _e.d
 input.text = input.text.map(function (value) {
     return hexToBinary(value.replace('0x', ''));
 });
-console.log(decodeInstruction('00100010000100010000000000000001', allRegisters));
+console.log(decodeInstruction('00100010000100010000000000000100', allRegisters));
 console.log('----------------------------------------------------');
 console.log(removeInvalidRegisters(allRegisters));
 /** -------------------------------------------------- **/

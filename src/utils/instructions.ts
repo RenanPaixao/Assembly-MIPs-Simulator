@@ -17,8 +17,8 @@ const instructionsOpCode = {
 	'101000': 'sb',
 	'001010': 'slti',
 	'101011': 'sw',
-	'001110': 'xori',
-	'000000': 'opZero' // opZero indicate instructions R type
+	'001110': 'xori'
+	//'000000': 'opZero' // opZero indicate instructions R type
 }
 
 function divInstructionI(instruction: string) {
@@ -40,7 +40,7 @@ const functions = {
 	'001000': 'jr',
 	'010000': 'mfhi',
 	'010010': 'mflo',
-	'0110000': 'mult',
+	'011000': 'mult',
 	'011001': 'multu',
 	'100111': 'nor',
 	'100101': 'or',
@@ -57,32 +57,117 @@ const functions = {
 	'100110': 'xor',
 }
 
+function divInstructionR(instruction: string) {
+	return {
+		opCode: getOpCode(instruction),
+		rs: instruction.substring(6, 11),
+		rt: instruction.substring(11, 16),
+		rd: instruction.substring(16, 21),
+		shift: instruction.substring(21, 26),
+		opcodeExtension: instruction.substring(26, 32)
+	}
+}
+
+function checkOverflow(op: string, value1: number, value2: number) {
+
+	let minValue = Number.MIN_VALUE
+	let maxValue = Number.MAX_VALUE
+	let cont1 = value1
+	let cont2 = value2
+
+	switch (op) {
+		case '+':
+			if ((cont1 + cont2) > maxValue || (cont1 + cont2) < minValue) {
+				return true
+			} break
+		case '-':
+			if ((cont1 - cont2) > maxValue || (cont1 - cont2) < minValue) {
+				return true
+			} break
+		default:
+			break
+	}
+
+	return false
+}
+
 function getOpCode(instruction: string) {
 	return instruction.substring(0, 6)
 }
 
-function objectToDecimal(object: any): {opcode: number, rs: number, rt: number, constant: number} {
+function getOpcodeExtension(instruction: string) {
+	return instruction.substring(26, 32)
+}
+
+function objectToDecimal(object: any): { opcode: number, rs: number, rt: number, constant: number } {
 	// @ts-ignore
 	const objectTransformedInEntries = Object.entries(object).map(([key, value]) => [key, parseInt(value, 2)])
-	
+
+	return Object.fromEntries(objectTransformedInEntries)
+}
+
+function objectToDecimalR(object: any): { opcode: number, rs: number, rt: number, rd: number, shift: number, constant: number } {
+	// @ts-ignore
+	const objectTransformedInEntries = Object.entries(object).map(([key, value]) => [key, parseInt(value, 2)])
+
 	return Object.fromEntries(objectTransformedInEntries)
 }
 
 export function decodeInstruction(instruction: string, allRegisters: Record<string, any>) {
 	const instructionName = instructionsOpCode[getOpCode(instruction)]
-	
-	if(getOpCode(instruction) !== '000000') {
+
+	if (getOpCode(instruction) !== '000000') {
 		const instructionI = divInstructionI(instruction)
-		
-		switch(instructionI.opCode) {
+
+		switch (instructionI.opCode) {
 			case '001000':
 				return addi(instruction, allRegisters)
+				break
+			case '001001':
+				return addiu(instruction, allRegisters)
+				break
+			case '001100':
+				return andi(instruction, allRegisters)
+				break
 			default:
 				console.log('------------------------------')
-				// throw new Error('Instruction not found')
+			// throw new Error('Instruction not found')
 		}
 	}
-	
+	else {
+		const instructionR = divInstructionR(instruction)
+
+		switch (instructionR.opcodeExtension) {
+			case '100000':
+				return add(instruction, allRegisters)
+				break
+			case '100001':
+				return addu(instruction, allRegisters)
+				break
+			case '100010':
+				return sub(instruction, allRegisters)
+				break
+			case '100011':
+				return subu(instruction, allRegisters)
+				break
+			case '011000':
+				return mult(instruction, allRegisters)
+				break
+			case '011001':
+				return multu(instruction, allRegisters)
+				break
+			case '010010':
+				return mflo(instruction, allRegisters)
+				break
+			case '010000':
+				return mfhi(instruction, allRegisters)
+				break
+			default:
+				console.log('---------------------------')
+		}
+
+	}
+
 }
 
 // Lembrar de usar o script antes de codar (yarn tsc:w)
@@ -97,16 +182,144 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 /**
  * Returns a parsed instruction
  */
+
+//Funções para as instruções tipo I
+
 function addi(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionI(instruction)
 	const objectTransformed = objectToDecimal(divInstruction)
-	
-	// Executa a operação
+
+	//Precisa adicionar a checagem de overflow
+
 	const operationResult = allRegisters[`$${objectTransformed.rs}`] + objectTransformed.constant
-	
+
 	allRegisters[`$${objectTransformed.rt}`] = operationResult
-	
+
 	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rt}, $${objectTransformed.rs}, ${objectTransformed.constant}`
 }
 
+function addiu(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+
+	const operationResult = allRegisters[`$${objectTransformed.rs}`] + objectTransformed.constant
+
+	allRegisters[`$${objectTransformed.rt}`] = operationResult
+
+	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rt}, $${objectTransformed.rs}, ${objectTransformed.constant}`
+}
+
+function andi(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	//const objectTransformed = objectToDecimal(divInstruction)
+
+}
+
+/* ----------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------- */
+
+
+//Funções para as instruções tipo R
+
+function add(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+
+	//Precisa adicionar a checagem de overflow
+
+	const operationResult = allRegisters[`$${objectTransformed.rs}`] + allRegisters[`$${objectTransformed.rt}`]
+
+	allRegisters[`$${objectTransformed.rd}`] = operationResult
+
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, ${objectTransformed.rt}`
+
+}
+
+function addu(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+
+	const operationResult = allRegisters[`$${objectTransformed.rs}`] + allRegisters[`$${objectTransformed.rt}`]
+
+	allRegisters[`$${objectTransformed.rd}`] = operationResult
+
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, ${objectTransformed.rt}`
+
+}
+
+function sub(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+
+	//Precisa adicionar a checagem de overflow
+
+	const operationResult = allRegisters[`$${objectTransformed.rs}`] - allRegisters[`$${objectTransformed.rt}`]
+
+	allRegisters[`$${objectTransformed.rd}`] = operationResult
+
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, ${objectTransformed.rt}`
+
+}
+
+function subu(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+
+	const operationResult = allRegisters[`$${objectTransformed.rs}`] - allRegisters[`$${objectTransformed.rt}`]
+
+	allRegisters[`$${objectTransformed.rd}`] = operationResult
+
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, ${objectTransformed.rt}`
+
+}
+
+function mult(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+
+	//Precisa adicionar a condição de overflow
+
+	const operationResult = allRegisters[`$${objectTransformed.rs}`] * allRegisters[`$${objectTransformed.rt}`]
+
+	allRegisters['lo'] = operationResult
+
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rs}, $${objectTransformed.rt}`
+
+}
+
+function multu(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+
+
+	const operationResult = allRegisters[`$${objectTransformed.rs}`] * allRegisters[`$${objectTransformed.rt}`]
+
+	allRegisters['lo'] = operationResult
+
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rs}, $${objectTransformed.rt}`
+
+}
+
+function mflo(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+
+	allRegisters[`$${objectTransformed.rd}`] = allRegisters['lo']
+
+	return `$${objectTransformed.rd}`
+
+}
+
+function mfhi(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+
+	allRegisters[`$${objectTransformed.rd}`] = allRegisters['hi']
+
+	return `$${objectTransformed.rd}`
+
+}
 

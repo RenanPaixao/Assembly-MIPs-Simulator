@@ -36,7 +36,7 @@ input.text = input.text.map(value =>{
 	return hexToBinary(value.replace('0x', ''))
 })
 
-console.log(decodeInstruction('00100010000100010000000000000001', allRegisters))
+console.log(decodeInstruction('00100010000100010000000000000100', allRegisters))
 console.log('----------------------------------------------------')
 console.log(removeInvalidRegisters(allRegisters))
 
