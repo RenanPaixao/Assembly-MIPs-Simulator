@@ -51,7 +51,7 @@ var functions = {
     '100010': 'sub',
     '100011': 'subu',
     '001100': 'syscall',
-    '100110': 'xor',
+    '100110': 'xor', // nor
 };
 function divInstructionR(instruction) {
     return {
@@ -123,14 +123,16 @@ function applyOperationInRsRt(instruction, allRegisters) {
             allRegisters[rdProperty] = rsRt.rs & rsRt.rt;
             return "".concat(instructionsOpCode[divInstruction.opCode], " ").concat(rdProperty, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
         case '100111': //nor
-        // allRegisters[rdProperty] = rsRt.rs & rsRt.rt
-        // return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
+            allRegisters[rdProperty] = ~(rsRt.rs | rsRt.rt);
+            return "".concat(instructionsOpCode[divInstruction.opCode], " ").concat(rdProperty, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
         case '100101': //or
-            break;
+            allRegisters[rdProperty] = rsRt.rs | rsRt.rt;
+            return "".concat(instructionsOpCode[divInstruction.opCode], " ").concat(rdProperty, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
         case '100110': //xor
-            break;
+            allRegisters[rdProperty] = rsRt.rs ^ rsRt.rt;
+            return "".concat(instructionsOpCode[divInstruction.opCode], " ").concat(rdProperty, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
         default:
-            return;
+            throw new Error('Operation Not Found');
     }
 }
 export function decodeInstruction(instruction, allRegisters) {
@@ -177,6 +179,10 @@ export function decodeInstruction(instruction, allRegisters) {
             return mflo(instruction, allRegisters);
         case '010000':
             return mfhi(instruction, allRegisters);
+        case '100100' || '100111' || '100101' || '100110':
+            return applyOperationInRsRt(instruction, allRegisters);
+        case '101010':
+            return slt(instruction, allRegisters);
         default:
             allRegisters.pc -= 4;
             console.log('---------------------------');
@@ -316,5 +322,12 @@ function mfhi(instruction, allRegisters) {
     var objectTransformed = objectToDecimalR(divInstruction);
     allRegisters["$".concat(objectTransformed.rd)] = allRegisters.hi;
     return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd);
+}
+function slt(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    allRegisters["$".concat(objectTransformed.rd)] = rsRt.rs < rsRt.rt ? 1 : 0;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
 }
 //# sourceMappingURL=instructions.js.map

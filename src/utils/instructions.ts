@@ -34,7 +34,7 @@ function divInstructionI(instruction: string) {
 const functions = {
 	'100000': 'add', //done
 	'100001': 'addu', //done
-	'100100': 'and',
+	'100100': 'and', //done
 	'011010': 'div', //done
 	'011011': 'divu', //done
 	'001000': 'jr',
@@ -42,11 +42,11 @@ const functions = {
 	'010010': 'mflo', //done
 	'011000': 'mult', //done
 	'011001': 'multu', //done
-	'100111': 'nor',
-	'100101': 'or',
+	'100111': 'nor', // done
+	'100101': 'or', // done
 	'000000': 'sll',
 	'000100': 'sllv',
-	'101010': 'slt',
+	'101010': 'slt', // done
 	'000011': 'sra',
 	'000111': 'srav',
 	'000010': 'srl',
@@ -54,7 +54,7 @@ const functions = {
 	'100010': 'sub', //done
 	'100011': 'subu', //done
 	'001100': 'syscall',
-	'100110': 'xor',
+	'100110': 'xor', // nor
 }
 
 function divInstructionR(instruction: string) {
@@ -133,14 +133,16 @@ function applyOperationInRsRt(instruction: string, allRegisters: Record<string, 
 			allRegisters[rdProperty] = rsRt.rs & rsRt.rt
 			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 		case '100111': //nor
-			// allRegisters[rdProperty] = rsRt.rs & rsRt.rt
-			// return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
+			allRegisters[rdProperty] = ~(rsRt.rs | rsRt.rt)
+			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 		case '100101': //or
-			break
+			allRegisters[rdProperty] = rsRt.rs | rsRt.rt
+			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}` 
 		case '100110': //xor
-			break
+		allRegisters[rdProperty] = rsRt.rs ^ rsRt.rt
+		return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 		default:
-			return
+			throw new Error('Operation Not Found')
 	}
 }
 
@@ -193,6 +195,10 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 				return mflo(instruction, allRegisters)
 			case '010000':
 				return mfhi(instruction, allRegisters)
+			case '100100' || '100111' || '100101' || '100110':
+				return applyOperationInRsRt(instruction, allRegisters)
+			case '101010':
+				return slt(instruction, allRegisters)
 			default:
 				allRegisters.pc -= 4
 				console.log('---------------------------')
@@ -401,5 +407,15 @@ function mfhi(instruction: string, allRegisters: Record<string, any>) {
 	allRegisters[`$${objectTransformed.rd}`] = allRegisters.hi
 
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}`
+}
+
+function slt(instruction: string, allRegisters: Record<string, any>):string {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+
+	allRegisters[`$${objectTransformed.rd}`] = rsRt.rs < rsRt.rt ? 1 : 0
+	
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 }
 
