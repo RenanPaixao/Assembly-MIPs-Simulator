@@ -107,7 +107,8 @@ function objectToDecimal(object: any): { opcode: number, rs: number, rt: number,
 	return Object.fromEntries(objectTransformedInEntries)
 }
 
-function getRsAndRtFromBinary(allRegisters: Record<string, any>, rs: string | number, rt: string | number) {
+// pega os valores atuais dos registradores rs e rt
+function getRsAndRtFromBinary(allRegisters: Record<string, any>, rs: string | number, rt: string | number): { rs: number, rt: number } {
 	return {
 		rs: allRegisters[`$${rs}`],
 		rt: allRegisters[`$${rt}`]
@@ -121,7 +122,30 @@ function objectToDecimalR(object: any): { opcode: number, rs: number, rt: number
 	return Object.fromEntries(objectTransformedInEntries)
 }
 
+function applyOperationInRsRt(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+	const rdProperty = `$${objectTransformed.rd}`
+
+	switch(divInstruction.opcodeExtension) {
+		case '100100': //and
+			allRegisters[rdProperty] = rsRt.rs & rsRt.rt
+			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
+		case '100111': //nor
+			// allRegisters[rdProperty] = rsRt.rs & rsRt.rt
+			// return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
+		case '100101': //or
+			break
+		case '100110': //xor
+			break
+		default:
+			return
+	}
+}
+
 export function decodeInstruction(instruction: string, allRegisters: Record<string, any>) {
+	applyOperationInRsRt(instruction, allRegisters)
 	const instructionName = instructionsOpCode[getOpCode(instruction)]
 
 	if (getOpCode(instruction) !== '000000') {
@@ -377,6 +401,5 @@ function mfhi(instruction: string, allRegisters: Record<string, any>) {
 	allRegisters[`$${objectTransformed.rd}`] = allRegisters.hi
 
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}`
-
 }
 

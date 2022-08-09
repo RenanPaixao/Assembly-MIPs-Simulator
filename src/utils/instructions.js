@@ -98,6 +98,7 @@ function objectToDecimal(object) {
     });
     return Object.fromEntries(objectTransformedInEntries);
 }
+// pega os valores atuais dos registradores rs e rt
 function getRsAndRtFromBinary(allRegisters, rs, rt) {
     return {
         rs: allRegisters["$".concat(rs)],
@@ -112,7 +113,28 @@ function objectToDecimalR(object) {
     });
     return Object.fromEntries(objectTransformedInEntries);
 }
+function applyOperationInRsRt(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    var rdProperty = "$".concat(objectTransformed.rd);
+    switch (divInstruction.opcodeExtension) {
+        case '100100': //and
+            allRegisters[rdProperty] = rsRt.rs & rsRt.rt;
+            return "".concat(instructionsOpCode[divInstruction.opCode], " ").concat(rdProperty, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
+        case '100111': //nor
+        // allRegisters[rdProperty] = rsRt.rs & rsRt.rt
+        // return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
+        case '100101': //or
+            break;
+        case '100110': //xor
+            break;
+        default:
+            return;
+    }
+}
 export function decodeInstruction(instruction, allRegisters) {
+    applyOperationInRsRt(instruction, allRegisters);
     var instructionName = instructionsOpCode[getOpCode(instruction)];
     if (getOpCode(instruction) !== '000000') {
         var instructionI = divInstructionI(instruction);
