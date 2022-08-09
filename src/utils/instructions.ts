@@ -336,7 +336,7 @@ function mflo(instruction: string, allRegisters: Record<string, any>) {
 
 	allRegisters[`$${objectTransformed.rd}`] = allRegisters['lo']
 
-	return `$${objectTransformed.rd}`
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}`
 
 }
 
@@ -346,7 +346,7 @@ function mfhi(instruction: string, allRegisters: Record<string, any>) {
 
 	allRegisters[`$${objectTransformed.rd}`] = allRegisters['hi']
 
-	return `$${objectTransformed.rd}`
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}`
 
 }
 

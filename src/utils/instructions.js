@@ -261,12 +261,12 @@ function mflo(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimalR(divInstruction);
     allRegisters["$".concat(objectTransformed.rd)] = allRegisters['lo'];
-    return "$".concat(objectTransformed.rd);
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd);
 }
 function mfhi(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimalR(divInstruction);
     allRegisters["$".concat(objectTransformed.rd)] = allRegisters['hi'];
-    return "$".concat(objectTransformed.rd);
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd);
 }
 //# sourceMappingURL=instructions.js.map
