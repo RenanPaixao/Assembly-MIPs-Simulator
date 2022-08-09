@@ -128,6 +128,7 @@ export function decodeInstruction(instruction, allRegisters) {
             default:
                 console.log('------------------------------');
                 allRegisters.pc -= 4;
+                return;
             // throw new Error('Instruction not found')
         }
     }
@@ -140,6 +141,8 @@ export function decodeInstruction(instruction, allRegisters) {
             return addu(instruction, allRegisters);
         case '011010':
             return div(instruction, allRegisters);
+        case '011011':
+            return divu(instruction, allRegisters);
         case '100010':
             return sub(instruction, allRegisters);
         case '100011':
@@ -200,20 +203,36 @@ function add(instruction, allRegisters) {
     //Precisa adicionar a checagem de overflow
     var operationResult = allRegisters["$".concat(objectTransformed.rs)] + allRegisters["$".concat(objectTransformed.rt)];
     allRegisters["$".concat(objectTransformed.rd)] = operationResult;
-    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.rt);
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
 }
 function addu(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimalR(divInstruction);
     var operationResult = allRegisters["$".concat(objectTransformed.rs)] + allRegisters["$".concat(objectTransformed.rt)];
     allRegisters["$".concat(objectTransformed.rd)] = operationResult;
-    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.rt);
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
 }
 function div(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimal(divInstruction);
     var parsedInstruction = "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
-    console.log(objectTransformed);
+    // Rejeitando divisão por zero
+    if (!objectTransformed.rs || !objectTransformed.rt) {
+        allRegisters.lo = 0;
+        allRegisters.hi = 0;
+        return parsedInstruction;
+    }
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    var loResult = Math.floor(rsRt.rs / rsRt.rt);
+    var hiResult = rsRt.rs % rsRt.rt;
+    allRegisters.lo = loResult;
+    allRegisters.hi = hiResult;
+    return parsedInstruction;
+}
+function divu(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var parsedInstruction = "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
     // Rejeitando divisão por zero
     if (!objectTransformed.rs || !objectTransformed.rt) {
         allRegisters.lo = 0;
@@ -233,40 +252,47 @@ function sub(instruction, allRegisters) {
     //Precisa adicionar a checagem de overflow
     var operationResult = allRegisters["$".concat(objectTransformed.rs)] - allRegisters["$".concat(objectTransformed.rt)];
     allRegisters["$".concat(objectTransformed.rd)] = operationResult;
-    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.rt);
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
 }
 function subu(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimalR(divInstruction);
     var operationResult = allRegisters["$".concat(objectTransformed.rs)] - allRegisters["$".concat(objectTransformed.rt)];
     allRegisters["$".concat(objectTransformed.rd)] = operationResult;
-    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.rt);
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
 }
 function mult(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimalR(divInstruction);
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    var loResult = Math.floor(rsRt.rs * rsRt.rt);
+    var hiResult = rsRt.rs % rsRt.rt;
     //Precisa adicionar a condição de overflow
-    var operationResult = allRegisters["$".concat(objectTransformed.rs)] * allRegisters["$".concat(objectTransformed.rt)];
-    allRegisters['lo'] = operationResult;
+    allRegisters.lo = loResult;
+    allRegisters.hi = hiResult;
     return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
 }
 function multu(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimalR(divInstruction);
-    var operationResult = allRegisters["$".concat(objectTransformed.rs)] * allRegisters["$".concat(objectTransformed.rt)];
-    allRegisters['lo'] = operationResult;
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    var loResult = Math.floor(rsRt.rs * rsRt.rt);
+    var hiResult = rsRt.rs % rsRt.rt;
+    //Precisa adicionar a condição de overflow
+    allRegisters.lo = loResult;
+    allRegisters.hi = hiResult;
     return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
 }
 function mflo(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimalR(divInstruction);
-    allRegisters["$".concat(objectTransformed.rd)] = allRegisters['lo'];
+    allRegisters["$".concat(objectTransformed.rd)] = allRegisters.lo;
     return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd);
 }
 function mfhi(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimalR(divInstruction);
-    allRegisters["$".concat(objectTransformed.rd)] = allRegisters['hi'];
+    allRegisters["$".concat(objectTransformed.rd)] = allRegisters.hi;
     return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd);
 }
 //# sourceMappingURL=instructions.js.map

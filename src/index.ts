@@ -36,13 +36,15 @@ input.text = input.text.map(value =>{
 	return hexToBinary(value.replace('0x', ''))
 })
 
-console.log(decodeInstruction('00100010000100010000000000000100', allRegisters))
-console.log('----------------------------------------------------')
+
 console.log(removeInvalidRegisters(allRegisters))
 
 /** -------------------------------------------------- **/
-
-console.log(decodeInstruction('00000000001100010000000000011010', allRegisters))
+console.log(decodeInstruction('00100010000100010000000000000100', allRegisters))
+console.log(decodeInstruction(testString('000000 10001 00001 00000 00000 100010'), allRegisters))
 console.log('----------------------------------------------------')
 console.log(removeInvalidRegisters(allRegisters))
 
+function testString(str: string) {
+	return str.replaceAll(' ', '')
+}

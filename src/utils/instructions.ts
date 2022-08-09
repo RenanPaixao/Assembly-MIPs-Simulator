@@ -36,7 +36,7 @@ const functions = {
 	'100001': 'addu', //done
 	'100100': 'and',
 	'011010': 'div', //done
-	'011011': 'divu',
+	'011011': 'divu', //done
 	'001000': 'jr',
 	'010000': 'mfhi', //done
 	'010010': 'mflo', //done
@@ -79,7 +79,8 @@ function checkOverflow(op: string, value1: number, value2: number) {
 		case '+':
 			if ((cont1 + cont2) > maxValue || (cont1 + cont2) < minValue) {
 				return true
-			} break
+			}
+			break
 		case '-':
 			if ((cont1 - cont2) > maxValue || (cont1 - cont2) < minValue) {
 				return true
@@ -139,6 +140,7 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 			default:
 				console.log('------------------------------')
 				allRegisters.pc -= 4
+				return
 			// throw new Error('Instruction not found')
 		}
 	}
@@ -153,6 +155,8 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 				return addu(instruction, allRegisters)
 			case '011010':
 				return div(instruction, allRegisters)
+			case '011011':
+				return divu(instruction, allRegisters)
 			case '100010':
 				return sub(instruction, allRegisters)
 			case '100011':
@@ -236,8 +240,7 @@ function add(instruction: string, allRegisters: Record<string, any>) {
 
 	allRegisters[`$${objectTransformed.rd}`] = operationResult
 
-	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, ${objectTransformed.rt}`
-
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 }
 
 function addu(instruction: string, allRegisters: Record<string, any>) {
@@ -248,7 +251,7 @@ function addu(instruction: string, allRegisters: Record<string, any>) {
 
 	allRegisters[`$${objectTransformed.rd}`] = operationResult
 
-	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, ${objectTransformed.rt}`
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 
 }
 
@@ -258,7 +261,30 @@ function div(instruction: string, allRegisters: Record<string, any>) {
 	
 	const parsedInstruction = `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rs}, $${objectTransformed.rt}`
 	
-	console.log(objectTransformed)
+	// Rejeitando divisão por zero
+	if(!objectTransformed.rs || !objectTransformed.rt) {
+		allRegisters.lo = 0
+		allRegisters.hi = 0
+		
+		return parsedInstruction
+	}
+	
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+	const loResult =  Math.floor(rsRt.rs / rsRt.rt)
+	const hiResult = rsRt.rs % rsRt.rt
+	
+	allRegisters.lo = loResult
+	allRegisters.hi = hiResult
+	
+	return parsedInstruction
+}
+
+function divu(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	
+	const parsedInstruction = `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rs}, $${objectTransformed.rt}`
+	
 	// Rejeitando divisão por zero
 	if(!objectTransformed.rs || !objectTransformed.rt) {
 		allRegisters.lo = 0
@@ -282,12 +308,12 @@ function sub(instruction: string, allRegisters: Record<string, any>) {
 	const objectTransformed = objectToDecimalR(divInstruction)
 
 	//Precisa adicionar a checagem de overflow
-
+	
 	const operationResult = allRegisters[`$${objectTransformed.rs}`] - allRegisters[`$${objectTransformed.rt}`]
 
 	allRegisters[`$${objectTransformed.rd}`] = operationResult
 
-	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, ${objectTransformed.rt}`
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 
 }
 
@@ -299,20 +325,22 @@ function subu(instruction: string, allRegisters: Record<string, any>) {
 
 	allRegisters[`$${objectTransformed.rd}`] = operationResult
 
-	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, ${objectTransformed.rt}`
-
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 }
 
 function mult(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
+	
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+	const loResult =  Math.floor(rsRt.rs * rsRt.rt)
+	const hiResult = rsRt.rs % rsRt.rt
 
 	//Precisa adicionar a condição de overflow
 
-	const operationResult = allRegisters[`$${objectTransformed.rs}`] * allRegisters[`$${objectTransformed.rt}`]
-
-	allRegisters['lo'] = operationResult
-
+	allRegisters.lo = loResult
+	allRegisters.hi = hiResult
+	
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rs}, $${objectTransformed.rt}`
 
 }
@@ -320,31 +348,33 @@ function mult(instruction: string, allRegisters: Record<string, any>) {
 function multu(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
-
-
-	const operationResult = allRegisters[`$${objectTransformed.rs}`] * allRegisters[`$${objectTransformed.rt}`]
-
-	allRegisters['lo'] = operationResult
+	
+	
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+	const loResult =  Math.floor(rsRt.rs * rsRt.rt)
+	const hiResult = rsRt.rs % rsRt.rt
+	
+	//Precisa adicionar a condição de overflow
+	allRegisters.lo = loResult
+	allRegisters.hi = hiResult
 
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rs}, $${objectTransformed.rt}`
-
 }
 
 function mflo(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 
-	allRegisters[`$${objectTransformed.rd}`] = allRegisters['lo']
+	allRegisters[`$${objectTransformed.rd}`] = allRegisters.lo
 
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}`
-
 }
 
 function mfhi(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 
-	allRegisters[`$${objectTransformed.rd}`] = allRegisters['hi']
+	allRegisters[`$${objectTransformed.rd}`] = allRegisters.hi
 
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}`
 

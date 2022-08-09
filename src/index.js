@@ -30,11 +30,13 @@ Object.entries((_f = (_e = input.data) === null || _e === void 0 ? void 0 : _e.d
 input.text = input.text.map(function (value) {
     return hexToBinary(value.replace('0x', ''));
 });
-console.log(decodeInstruction('00100010000100010000000000000100', allRegisters));
-console.log('----------------------------------------------------');
 console.log(removeInvalidRegisters(allRegisters));
 /** -------------------------------------------------- **/
-console.log(decodeInstruction('00000000001100010000000000011010', allRegisters));
+console.log(decodeInstruction('00100010000100010000000000000100', allRegisters));
+console.log(decodeInstruction(testString('000000 10001 00001 00000 00000 100010'), allRegisters));
 console.log('----------------------------------------------------');
 console.log(removeInvalidRegisters(allRegisters));
+function testString(str) {
+    return str.replaceAll(' ', '');
+}
 //# sourceMappingURL=index.js.map
