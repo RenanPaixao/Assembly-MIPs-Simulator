@@ -1,7 +1,7 @@
 const instructionsOpCode = {
-	'001000': 'addi',
-	'001001': 'addiu',
-	'001100': 'andi',
+	'001000': 'addi', //done
+	'001001': 'addiu', //done
+	'001100': 'andi', //in progress
 	'000111': 'bgtz',
 	'000100': 'beq',
 	'000001': 'bltz',
@@ -17,8 +17,8 @@ const instructionsOpCode = {
 	'101000': 'sb',
 	'001010': 'slti',
 	'101011': 'sw',
-	'001110': 'xori'
-	//'000000': 'opZero' // opZero indicate instructions R type
+	'001110': 'xori',
+	'000000': 'opZero' // opZero indicate instructions R type
 }
 
 function divInstructionI(instruction: string) {
@@ -32,16 +32,16 @@ function divInstructionI(instruction: string) {
 
 
 const functions = {
-	'100000': 'add',
-	'100001': 'addu',
+	'100000': 'add', //done
+	'100001': 'addu', //done
 	'100100': 'and',
-	'011010': 'div',
+	'011010': 'div', //done
 	'011011': 'divu',
 	'001000': 'jr',
-	'010000': 'mfhi',
-	'010010': 'mflo',
-	'011000': 'mult',
-	'011001': 'multu',
+	'010000': 'mfhi', //done
+	'010010': 'mflo', //done
+	'011000': 'mult', //done
+	'011001': 'multu', //done
 	'100111': 'nor',
 	'100101': 'or',
 	'000000': 'sll',
@@ -51,8 +51,8 @@ const functions = {
 	'000111': 'srav',
 	'000010': 'srl',
 	'000110': 'srlv',
-	'100010': 'sub',
-	'100011': 'subu',
+	'100010': 'sub', //done
+	'100011': 'subu', //done
 	'001100': 'syscall',
 	'100110': 'xor',
 }
@@ -106,6 +106,13 @@ function objectToDecimal(object: any): { opcode: number, rs: number, rt: number,
 	return Object.fromEntries(objectTransformedInEntries)
 }
 
+function getRsAndRtFromBinary(allRegisters: Record<string, any>, rs: string | number, rt: string | number) {
+	return {
+		rs: allRegisters[`$${rs}`],
+		rt: allRegisters[`$${rt}`]
+	}
+}
+
 function objectToDecimalR(object: any): { opcode: number, rs: number, rt: number, rd: number, shift: number, constant: number } {
 	// @ts-ignore
 	const objectTransformedInEntries = Object.entries(object).map(([key, value]) => [key, parseInt(value, 2)])
@@ -118,56 +125,51 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 
 	if (getOpCode(instruction) !== '000000') {
 		const instructionI = divInstructionI(instruction)
-
+		
+		//Adiciona mais 4 para o pc, indicando uma instrução
+		allRegisters.pc += 4
+		
 		switch (instructionI.opCode) {
 			case '001000':
 				return addi(instruction, allRegisters)
-				break
 			case '001001':
 				return addiu(instruction, allRegisters)
-				break
 			case '001100':
 				return andi(instruction, allRegisters)
-				break
 			default:
 				console.log('------------------------------')
+				allRegisters.pc -= 4
 			// throw new Error('Instruction not found')
 		}
 	}
-	else {
+	
+	/*------------------------------------------------------------------------------------------------------------------*/
 		const instructionR = divInstructionR(instruction)
-
+	
 		switch (instructionR.opcodeExtension) {
 			case '100000':
 				return add(instruction, allRegisters)
-				break
 			case '100001':
 				return addu(instruction, allRegisters)
-				break
+			case '011010':
+				return div(instruction, allRegisters)
 			case '100010':
 				return sub(instruction, allRegisters)
-				break
 			case '100011':
 				return subu(instruction, allRegisters)
-				break
 			case '011000':
 				return mult(instruction, allRegisters)
-				break
 			case '011001':
 				return multu(instruction, allRegisters)
-				break
 			case '010010':
 				return mflo(instruction, allRegisters)
-				break
 			case '010000':
 				return mfhi(instruction, allRegisters)
-				break
 			default:
+				allRegisters.pc -= 4
 				console.log('---------------------------')
+				// throw new Error('Instruction not found!')
 		}
-
-	}
-
 }
 
 // Lembrar de usar o script antes de codar (yarn tsc:w)
@@ -180,7 +182,7 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 // 2. a função decode instruction está sendo chamada dentro no index.ts
 // 3. usa um console.log no index.ts usando a função com uma instrução qualquer
 /**
- * Returns a parsed instruction
+ * Update a register with operation result and returns a parsed instruction
  */
 
 //Funções para as instruções tipo I
@@ -248,6 +250,31 @@ function addu(instruction: string, allRegisters: Record<string, any>) {
 
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, ${objectTransformed.rt}`
 
+}
+
+function div(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	
+	const parsedInstruction = `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rs}, $${objectTransformed.rt}`
+	
+	console.log(objectTransformed)
+	// Rejeitando divisão por zero
+	if(!objectTransformed.rs || !objectTransformed.rt) {
+		allRegisters.lo = 0
+		allRegisters.hi = 0
+		
+		return parsedInstruction
+	}
+	
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+	const loResult =  Math.floor(rsRt.rs / rsRt.rt)
+	const hiResult = rsRt.rs % rsRt.rt
+	
+	allRegisters.lo = loResult
+	allRegisters.hi = hiResult
+	
+	return parsedInstruction
 }
 
 function sub(instruction: string, allRegisters: Record<string, any>) {

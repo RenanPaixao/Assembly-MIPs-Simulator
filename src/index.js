@@ -34,4 +34,7 @@ console.log(decodeInstruction('00100010000100010000000000000100', allRegisters))
 console.log('----------------------------------------------------');
 console.log(removeInvalidRegisters(allRegisters));
 /** -------------------------------------------------- **/
+console.log(decodeInstruction('00000000001100010000000000011010', allRegisters));
+console.log('----------------------------------------------------');
+console.log(removeInvalidRegisters(allRegisters));
 //# sourceMappingURL=index.js.map

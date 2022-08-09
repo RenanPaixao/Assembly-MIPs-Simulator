@@ -17,8 +17,8 @@ var instructionsOpCode = {
     '101000': 'sb',
     '001010': 'slti',
     '101011': 'sw',
-    '001110': 'xori'
-    //'000000': 'opZero' // opZero indicate instructions R type
+    '001110': 'xori',
+    '000000': 'opZero' // opZero indicate instructions R type
 };
 function divInstructionI(instruction) {
     return {
@@ -98,6 +98,12 @@ function objectToDecimal(object) {
     });
     return Object.fromEntries(objectTransformedInEntries);
 }
+function getRsAndRtFromBinary(allRegisters, rs, rt) {
+    return {
+        rs: allRegisters["$".concat(rs)],
+        rt: allRegisters["$".concat(rt)]
+    };
+}
 function objectToDecimalR(object) {
     // @ts-ignore
     var objectTransformedInEntries = Object.entries(object).map(function (_a) {
@@ -110,51 +116,46 @@ export function decodeInstruction(instruction, allRegisters) {
     var instructionName = instructionsOpCode[getOpCode(instruction)];
     if (getOpCode(instruction) !== '000000') {
         var instructionI = divInstructionI(instruction);
+        //Adiciona mais 4 para o pc, indicando uma instrução
+        allRegisters.pc += 4;
         switch (instructionI.opCode) {
             case '001000':
                 return addi(instruction, allRegisters);
-                break;
             case '001001':
                 return addiu(instruction, allRegisters);
-                break;
             case '001100':
                 return andi(instruction, allRegisters);
-                break;
             default:
                 console.log('------------------------------');
+                allRegisters.pc -= 4;
             // throw new Error('Instruction not found')
         }
     }
-    else {
-        var instructionR = divInstructionR(instruction);
-        switch (instructionR.opcodeExtension) {
-            case '100000':
-                return add(instruction, allRegisters);
-                break;
-            case '100001':
-                return addu(instruction, allRegisters);
-                break;
-            case '100010':
-                return sub(instruction, allRegisters);
-                break;
-            case '100011':
-                return subu(instruction, allRegisters);
-                break;
-            case '011000':
-                return mult(instruction, allRegisters);
-                break;
-            case '011001':
-                return multu(instruction, allRegisters);
-                break;
-            case '010010':
-                return mflo(instruction, allRegisters);
-                break;
-            case '010000':
-                return mfhi(instruction, allRegisters);
-                break;
-            default:
-                console.log('---------------------------');
-        }
+    /*------------------------------------------------------------------------------------------------------------------*/
+    var instructionR = divInstructionR(instruction);
+    switch (instructionR.opcodeExtension) {
+        case '100000':
+            return add(instruction, allRegisters);
+        case '100001':
+            return addu(instruction, allRegisters);
+        case '011010':
+            return div(instruction, allRegisters);
+        case '100010':
+            return sub(instruction, allRegisters);
+        case '100011':
+            return subu(instruction, allRegisters);
+        case '011000':
+            return mult(instruction, allRegisters);
+        case '011001':
+            return multu(instruction, allRegisters);
+        case '010010':
+            return mflo(instruction, allRegisters);
+        case '010000':
+            return mfhi(instruction, allRegisters);
+        default:
+            allRegisters.pc -= 4;
+            console.log('---------------------------');
+        // throw new Error('Instruction not found!')
     }
 }
 // Lembrar de usar o script antes de codar (yarn tsc:w)
@@ -165,7 +166,7 @@ export function decodeInstruction(instruction, allRegisters) {
 // 2. a função decode instruction está sendo chamada dentro no index.ts
 // 3. usa um console.log no index.ts usando a função com uma instrução qualquer
 /**
- * Returns a parsed instruction
+ * Update a register with operation result and returns a parsed instruction
  */
 //Funções para as instruções tipo I
 function addi(instruction, allRegisters) {
@@ -207,6 +208,24 @@ function addu(instruction, allRegisters) {
     var operationResult = allRegisters["$".concat(objectTransformed.rs)] + allRegisters["$".concat(objectTransformed.rt)];
     allRegisters["$".concat(objectTransformed.rd)] = operationResult;
     return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.rt);
+}
+function div(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var parsedInstruction = "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
+    console.log(objectTransformed);
+    // Rejeitando divisão por zero
+    if (!objectTransformed.rs || !objectTransformed.rt) {
+        allRegisters.lo = 0;
+        allRegisters.hi = 0;
+        return parsedInstruction;
+    }
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    var loResult = Math.floor(rsRt.rs / rsRt.rt);
+    var hiResult = rsRt.rs % rsRt.rt;
+    allRegisters.lo = loResult;
+    allRegisters.hi = hiResult;
+    return parsedInstruction;
 }
 function sub(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
