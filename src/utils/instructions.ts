@@ -68,6 +68,18 @@ function divInstructionR(instruction: string) {
 	}
 }
 
+const instructionsTypeJ = {
+	'000010': 'j',
+	'000011': 'jal'
+}
+
+function divInstructionJ(instruction: string) {
+	return {
+		opCode: getOpCode(instruction),
+		jumpTargetAdsress: instruction.substring(6, 32)
+	}
+}
+
 function checkOverflow(op: string, value1: number, value2: number) {
 
 	let minValue = Number.MIN_VALUE
@@ -122,13 +134,20 @@ function objectToDecimalR(object: any): { opcode: number, rs: number, rt: number
 	return Object.fromEntries(objectTransformedInEntries)
 }
 
+function objectToDecimalJ(object: any): { opcode: number, jumpTargetAddress: number } {
+	// @ts-ignore
+	const objectTransformedInEntries = Object.entries(object).map(([key, value]) => [key, parseInt(value, 2)])
+
+	return Object.fromEntries(objectTransformedInEntries)
+}
+
 function applyOperationInRsRt(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
 	const rdProperty = `$${objectTransformed.rd}`
 
-	switch(divInstruction.opcodeExtension) {
+	switch (divInstruction.opcodeExtension) {
 		case '100100': //and
 			allRegisters[rdProperty] = rsRt.rs & rsRt.rt
 			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
@@ -137,10 +156,10 @@ function applyOperationInRsRt(instruction: string, allRegisters: Record<string, 
 			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 		case '100101': //or
 			allRegisters[rdProperty] = rsRt.rs | rsRt.rt
-			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}` 
+			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 		case '100110': //xor
-		allRegisters[rdProperty] = rsRt.rs ^ rsRt.rt
-		return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
+			allRegisters[rdProperty] = rsRt.rs ^ rsRt.rt
+			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 		default:
 			throw new Error('Operation Not Found')
 	}
@@ -152,10 +171,10 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 
 	if (getOpCode(instruction) !== '000000') {
 		const instructionI = divInstructionI(instruction)
-		
+
 		//Adiciona mais 4 para o pc, indicando uma instrução
 		allRegisters.pc += 4
-		
+
 		switch (instructionI.opCode) {
 			case '001000':
 				return addi(instruction, allRegisters)
@@ -170,48 +189,59 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 			// throw new Error('Instruction not found')
 		}
 	}
-	
+
 	/*------------------------------------------------------------------------------------------------------------------*/
-		const instructionR = divInstructionR(instruction)
-	
-		switch (instructionR.opcodeExtension) {
-			case '100000':
-				return add(instruction, allRegisters)
-			case '100001':
-				return addu(instruction, allRegisters)
-			case '011010':
-				return div(instruction, allRegisters)
-			case '011011':
-				return divu(instruction, allRegisters)
-			case '100010':
-				return sub(instruction, allRegisters)
-			case '100011':
-				return subu(instruction, allRegisters)
-			case '011000':
-				return mult(instruction, allRegisters)
-			case '011001':
-				return multu(instruction, allRegisters)
-			case '010010':
-				return mflo(instruction, allRegisters)
-			case '010000':
-				return mfhi(instruction, allRegisters)
-			case '100100' || '100111' || '100101' || '100110':
-				return applyOperationInRsRt(instruction, allRegisters)
-			case '101010':
-				return slt(instruction, allRegisters)
-			case '000010':
-				return srl(instruction, allRegisters)
-			case '000110':
-				return srlv(instruction, allRegisters)
-			case '000100':
-				return sllv(instruction, allRegisters)
-			case '000000':
-				return sll(instruction, allRegisters)
-			default:
-				allRegisters.pc -= 4
-				console.log('---------------------------')
-				// throw new Error('Instruction not found!')
-		}
+	const instructionR = divInstructionR(instruction)
+
+	switch (instructionR.opcodeExtension) {
+		case '100000':
+			return add(instruction, allRegisters)
+		case '100001':
+			return addu(instruction, allRegisters)
+		case '011010':
+			return div(instruction, allRegisters)
+		case '011011':
+			return divu(instruction, allRegisters)
+		case '100010':
+			return sub(instruction, allRegisters)
+		case '100011':
+			return subu(instruction, allRegisters)
+		case '011000':
+			return mult(instruction, allRegisters)
+		case '011001':
+			return multu(instruction, allRegisters)
+		case '010010':
+			return mflo(instruction, allRegisters)
+		case '010000':
+			return mfhi(instruction, allRegisters)
+		case '100100' || '100111' || '100101' || '100110':
+			return applyOperationInRsRt(instruction, allRegisters)
+		case '101010':
+			return slt(instruction, allRegisters)
+		case '000010':
+			return srl(instruction, allRegisters)
+		case '000110':
+			return srlv(instruction, allRegisters)
+		case '000100':
+			return sllv(instruction, allRegisters)
+		case '000000':
+			return sll(instruction, allRegisters)
+		default:
+			allRegisters.pc -= 4
+			console.log('---------------------------')
+		// throw new Error('Instruction not found!')
+	}
+
+	/* -----------------------------------------------------------------------------------------------------*/
+	const instructionJ = divInstructionJ(instruction)
+
+	switch (instructionJ.opCode) {
+		case '000010':
+			return j(instruction, allRegisters)
+		case '000011':
+			return jal(instruction, allRegisters)
+		default:
+	}
 }
 
 // Lembrar de usar o script antes de codar (yarn tsc:w)
@@ -296,48 +326,48 @@ function addu(instruction: string, allRegisters: Record<string, any>) {
 function div(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimal(divInstruction)
-	
+
 	const parsedInstruction = `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rs}, $${objectTransformed.rt}`
-	
+
 	// Rejeitando divisão por zero
-	if(!objectTransformed.rs || !objectTransformed.rt) {
+	if (!objectTransformed.rs || !objectTransformed.rt) {
 		allRegisters.lo = 0
 		allRegisters.hi = 0
-		
+
 		return parsedInstruction
 	}
-	
+
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
-	const loResult =  Math.floor(rsRt.rs / rsRt.rt)
+	const loResult = Math.floor(rsRt.rs / rsRt.rt)
 	const hiResult = rsRt.rs % rsRt.rt
-	
+
 	allRegisters.lo = loResult
 	allRegisters.hi = hiResult
-	
+
 	return parsedInstruction
 }
 
 function divu(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimal(divInstruction)
-	
+
 	const parsedInstruction = `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rs}, $${objectTransformed.rt}`
-	
+
 	// Rejeitando divisão por zero
-	if(!objectTransformed.rs || !objectTransformed.rt) {
+	if (!objectTransformed.rs || !objectTransformed.rt) {
 		allRegisters.lo = 0
 		allRegisters.hi = 0
-		
+
 		return parsedInstruction
 	}
-	
+
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
-	const loResult =  Math.floor(rsRt.rs / rsRt.rt)
+	const loResult = Math.floor(rsRt.rs / rsRt.rt)
 	const hiResult = rsRt.rs % rsRt.rt
-	
+
 	allRegisters.lo = loResult
 	allRegisters.hi = hiResult
-	
+
 	return parsedInstruction
 }
 
@@ -346,7 +376,7 @@ function sub(instruction: string, allRegisters: Record<string, any>) {
 	const objectTransformed = objectToDecimalR(divInstruction)
 
 	//Precisa adicionar a checagem de overflow
-	
+
 	const operationResult = allRegisters[`$${objectTransformed.rs}`] - allRegisters[`$${objectTransformed.rt}`]
 
 	allRegisters[`$${objectTransformed.rd}`] = operationResult
@@ -369,16 +399,16 @@ function subu(instruction: string, allRegisters: Record<string, any>) {
 function mult(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
-	
+
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
-	const loResult =  Math.floor(rsRt.rs * rsRt.rt)
+	const loResult = Math.floor(rsRt.rs * rsRt.rt)
 	const hiResult = rsRt.rs % rsRt.rt
 
 	//Precisa adicionar a condição de overflow
 
 	allRegisters.lo = loResult
 	allRegisters.hi = hiResult
-	
+
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rs}, $${objectTransformed.rt}`
 
 }
@@ -386,12 +416,12 @@ function mult(instruction: string, allRegisters: Record<string, any>) {
 function multu(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
-	
-	
+
+
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
-	const loResult =  Math.floor(rsRt.rs * rsRt.rt)
+	const loResult = Math.floor(rsRt.rs * rsRt.rt)
 	const hiResult = rsRt.rs % rsRt.rt
-	
+
 	//Precisa adicionar a condição de overflow
 	allRegisters.lo = loResult
 	allRegisters.hi = hiResult
@@ -417,13 +447,13 @@ function mfhi(instruction: string, allRegisters: Record<string, any>) {
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}`
 }
 
-function slt(instruction: string, allRegisters: Record<string, any>):string {
+function slt(instruction: string, allRegisters: Record<string, any>): string {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
 
 	allRegisters[`$${objectTransformed.rd}`] = rsRt.rs < rsRt.rt ? 1 : 0
-	
+
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 }
 
@@ -431,9 +461,9 @@ function sll(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
-	
+
 	allRegisters[`$${objectTransformed.rd}`] = rsRt.rt * Math.pow(2, objectTransformed.shift)
-	
+
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rt}, ${objectTransformed.shift},`
 }
 
@@ -441,9 +471,9 @@ function srl(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
-	
+
 	allRegisters[`$${objectTransformed.rd}`] = rsRt.rt * Math.pow(2, (-1) * objectTransformed.shift)
-	
+
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rt}, ${objectTransformed.shift},`
 }
 
@@ -451,9 +481,9 @@ function sllv(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
-	
+
 	allRegisters[`$${objectTransformed.rd}`] = rsRt.rt << objectTransformed.rs
-	
+
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rt}, $${objectTransformed.rs},`
 }
 
@@ -461,9 +491,9 @@ function srlv(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
-	
+
 	allRegisters[`$${objectTransformed.rd}`] = rsRt.rt >> objectTransformed.rs
-	
+
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rt}, $${objectTransformed.rs},`
 }
 
@@ -471,9 +501,9 @@ function sra(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
-	
+
 	allRegisters[`$${objectTransformed.rd}`] = rsRt.rt >> objectTransformed.shift
-	
+
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rt}, ${objectTransformed.shift},`
 }
 
@@ -481,8 +511,34 @@ function srav(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
-	
+
 	allRegisters[`$${objectTransformed.rd}`] = rsRt.rt >> objectTransformed.rs
-	
+
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rt}, ${objectTransformed.rs},`
+}
+
+
+/*----------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------*/
+
+//Intruções Tipo J
+function j(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionJ(instruction)
+	const objectTransformed = objectToDecimalJ(divInstruction)
+
+	allRegisters.pc = objectTransformed.jumpTargetAddress * 4
+
+	return `${functions[divInstruction.opCode]} ${objectTransformed.jumpTargetAddress}`
+}
+
+function jal(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionJ(instruction)
+	const objectTransformed = objectToDecimalJ(divInstruction)
+
+	allRegisters.$31 = allRegisters.pc
+
+	allRegisters.pc = objectTransformed.jumpTargetAddress * 4
+
+	return `${functions[divInstruction.opCode]} ${objectTransformed.jumpTargetAddress}`
 }

@@ -63,6 +63,16 @@ function divInstructionR(instruction) {
         opcodeExtension: instruction.substring(26, 32)
     };
 }
+var instructionsTypeJ = {
+    '000010': 'j',
+    '000011': 'jal'
+};
+function divInstructionJ(instruction) {
+    return {
+        opCode: getOpCode(instruction),
+        jumpTargetAdsress: instruction.substring(6, 32)
+    };
+}
 function checkOverflow(op, value1, value2) {
     var minValue = Number.MIN_VALUE;
     var maxValue = Number.MAX_VALUE;
@@ -106,6 +116,14 @@ function getRsAndRtFromBinary(allRegisters, rs, rt) {
     };
 }
 function objectToDecimalR(object) {
+    // @ts-ignore
+    var objectTransformedInEntries = Object.entries(object).map(function (_a) {
+        var key = _a[0], value = _a[1];
+        return [key, parseInt(value, 2)];
+    });
+    return Object.fromEntries(objectTransformedInEntries);
+}
+function objectToDecimalJ(object) {
     // @ts-ignore
     var objectTransformedInEntries = Object.entries(object).map(function (_a) {
         var key = _a[0], value = _a[1];
@@ -195,6 +213,15 @@ export function decodeInstruction(instruction, allRegisters) {
             allRegisters.pc -= 4;
             console.log('---------------------------');
         // throw new Error('Instruction not found!')
+    }
+    /* -----------------------------------------------------------------------------------------------------*/
+    var instructionJ = divInstructionJ(instruction);
+    switch (instructionJ.opCode) {
+        case '000010':
+            return j(instruction, allRegisters);
+        case '000011':
+            return jal(instruction, allRegisters);
+        default:
     }
 }
 // Lembrar de usar o script antes de codar (yarn tsc:w)
@@ -379,5 +406,22 @@ function srav(instruction, allRegisters) {
     var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
     allRegisters["$".concat(objectTransformed.rd)] = rsRt.rt >> objectTransformed.rs;
     return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rt, ", ").concat(objectTransformed.rs, ",");
+}
+/*----------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------*/
+//Intruções Tipo J
+function j(instruction, allRegisters) {
+    var divInstruction = divInstructionJ(instruction);
+    var objectTransformed = objectToDecimalJ(divInstruction);
+    allRegisters.pc = objectTransformed.jumpTargetAddress * 4;
+    return "".concat(functions[divInstruction.opCode], " ").concat(objectTransformed.jumpTargetAddress);
+}
+function jal(instruction, allRegisters) {
+    var divInstruction = divInstructionJ(instruction);
+    var objectTransformed = objectToDecimalJ(divInstruction);
+    allRegisters.$31 = allRegisters.pc;
+    allRegisters.pc = objectTransformed.jumpTargetAddress * 4;
+    return "".concat(functions[divInstruction.opCode], " ").concat(objectTransformed.jumpTargetAddress);
 }
 //# sourceMappingURL=instructions.js.map
