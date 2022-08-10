@@ -183,6 +183,14 @@ export function decodeInstruction(instruction, allRegisters) {
             return applyOperationInRsRt(instruction, allRegisters);
         case '101010':
             return slt(instruction, allRegisters);
+        case '000010':
+            return slr(instruction, allRegisters);
+        case '000110':
+            return slrv(instruction, allRegisters);
+        case '000100':
+            return sllv(instruction, allRegisters);
+        case '000000':
+            return sll(instruction, allRegisters);
         default:
             allRegisters.pc -= 4;
             console.log('---------------------------');
@@ -329,5 +337,33 @@ function slt(instruction, allRegisters) {
     var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
     allRegisters["$".concat(objectTransformed.rd)] = rsRt.rs < rsRt.rt ? 1 : 0;
     return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
+}
+function sll(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    allRegisters["$".concat(objectTransformed.rd)] = rsRt.rt << objectTransformed.shift;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rt, ", ").concat(objectTransformed.shift, ",");
+}
+function slr(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    allRegisters["$".concat(objectTransformed.rd)] = rsRt.rt >> objectTransformed.shift;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rt, ", ").concat(objectTransformed.shift, ",");
+}
+function sllv(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    allRegisters["$".concat(objectTransformed.rd)] = rsRt.rt << objectTransformed.rs;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rt, ", $").concat(objectTransformed.rs, ",");
+}
+function slrv(instruction, allRegisters) {
+    var divInstruction = divInstructionR(instruction);
+    var objectTransformed = objectToDecimalR(divInstruction);
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    allRegisters["$".concat(objectTransformed.rd)] = rsRt.rt >> objectTransformed.rs;
+    return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rt, ", $").concat(objectTransformed.rs, ",");
 }
 //# sourceMappingURL=instructions.js.map

@@ -44,13 +44,13 @@ const functions = {
 	'011001': 'multu', //done
 	'100111': 'nor', // done
 	'100101': 'or', // done
-	'000000': 'sll',
-	'000100': 'sllv',
-	'101010': 'slt', // done
+	'000000': 'sll', // done
+	'000100': 'sllv', //done
+	'101010': 'slt', //done
 	'000011': 'sra',
 	'000111': 'srav',
-	'000010': 'srl',
-	'000110': 'srlv',
+	'000010': 'srl', //done
+	'000110': 'srlv',//done
 	'100010': 'sub', //done
 	'100011': 'subu', //done
 	'001100': 'syscall',
@@ -199,6 +199,14 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 				return applyOperationInRsRt(instruction, allRegisters)
 			case '101010':
 				return slt(instruction, allRegisters)
+			case '000010':
+				return slr(instruction, allRegisters)
+			case '000110':
+				return slrv(instruction, allRegisters)
+			case '000100':
+				return sllv(instruction, allRegisters)
+			case '000000':
+				return sll(instruction, allRegisters)
 			default:
 				allRegisters.pc -= 4
 				console.log('---------------------------')
@@ -419,3 +427,42 @@ function slt(instruction: string, allRegisters: Record<string, any>):string {
 	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 }
 
+function sll(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+	
+	allRegisters[`$${objectTransformed.rd}`] = rsRt.rt << objectTransformed.shift
+	
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rt}, ${objectTransformed.shift},`
+}
+
+function slr(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+	
+	allRegisters[`$${objectTransformed.rd}`] = rsRt.rt >> objectTransformed.shift
+	
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rt}, ${objectTransformed.shift},`
+}
+
+function sllv(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+	
+	allRegisters[`$${objectTransformed.rd}`] = rsRt.rt << objectTransformed.rs
+	
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rt}, $${objectTransformed.rs},`
+}
+
+function slrv(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionR(instruction)
+	const objectTransformed = objectToDecimalR(divInstruction)
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+	
+	allRegisters[`$${objectTransformed.rd}`] = rsRt.rt >> objectTransformed.rs
+	
+	return `${functions[divInstruction.opcodeExtension]} $${objectTransformed.rd}, $${objectTransformed.rt}, $${objectTransformed.rs},`
+}
