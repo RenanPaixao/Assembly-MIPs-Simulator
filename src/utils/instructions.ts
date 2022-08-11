@@ -193,8 +193,8 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 				return bgtz(instruction, allRegisters)
 			default:
 				allRegisters.pc -= 4
+				console.log('instrução não encontrada')
 				return
-			// throw new Error('Instruction not found')
 		}
 	}
 	

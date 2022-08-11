@@ -77,12 +77,12 @@ function checkOverflow(op, value1, value2) {
     var cont1 = value1;
     var cont2 = value2;
     switch (op) {
-        case '+':
+        case '100000':
             if ((cont1 + cont2) > maxValue || (cont1 + cont2) < minValue) {
                 return true;
             }
             break;
-        case '-':
+        case '100010':
             if ((cont1 - cont2) > maxValue || (cont1 - cont2) < minValue) {
                 return true;
             }
@@ -166,10 +166,20 @@ export function decodeInstruction(instruction, allRegisters) {
                 return addiu(instruction, allRegisters);
             case '001100':
                 return andi(instruction, allRegisters);
+            case '000100':
+                return beq(instruction, allRegisters);
+            case '000101':
+                return bne(instruction, allRegisters);
+            case '000001':
+                return bltz(instruction, allRegisters);
+            case '000110':
+                return blez(instruction, allRegisters);
+            case '000111':
+                return bgtz(instruction, allRegisters);
             default:
                 allRegisters.pc -= 4;
+                console.log('instrução não encontrada');
                 return;
-            // throw new Error('Instruction not found')
         }
     }
     /* -----------------------------------------------------------------------------------------------------*/
@@ -255,6 +265,46 @@ function addiu(instruction, allRegisters) {
 function andi(instruction, allRegisters) {
     var divInstruction = divInstructionI(instruction);
     //const objectTransformed = objectToDecimal(divInstruction)
+}
+function beq(instruction, allRegisters) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    if (allRegisters["$".concat(objectTransformed.rs)] == allRegisters["$".concat(objectTransformed.rt)]) {
+        allRegisters.pc += (objectTransformed.constant * 4);
+        allRegisters.pc -= 4;
+    }
+}
+function bne(instruction, allRegisters) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    if (allRegisters["$".concat(objectTransformed.rs)] != allRegisters["$".concat(objectTransformed.rt)]) {
+        allRegisters.pc += (objectTransformed.constant * 4);
+        allRegisters.pc -= 4;
+    }
+}
+function bltz(instruction, allRegisters) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    if (allRegisters["$".concat(objectTransformed.rs)] < 0) {
+        allRegisters.pc += (objectTransformed.constant * 4);
+        allRegisters.pc -= 4;
+    }
+}
+function blez(instruction, allRegisters) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    if (allRegisters["$".concat(objectTransformed.rs)] <= 0) {
+        allRegisters.pc += (objectTransformed.constant * 4);
+        allRegisters.pc -= 4;
+    }
+}
+function bgtz(instruction, allRegisters) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    if (allRegisters["$".concat(objectTransformed.rs)] > 0) {
+        allRegisters.pc += (objectTransformed.constant * 4);
+        allRegisters.pc -= 4;
+    }
 }
 /* ----------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
