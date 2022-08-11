@@ -1,19 +1,22 @@
-import { initializeRegisters, removeInvalidRegisters } from './utils/registers.js'
-import { decodeInstruction } from './utils/instructions.js'
 // @ts-ignore
 import hexToBinary from 'hex-to-binary'
-import * as Types from './utils/types'
 import { readFileSync } from 'fs'
+import * as Types from './utils/types'
+import { initializeRegisters, removeInvalidRegisters } from './utils/registers.js'
+import { decodeInstruction } from './utils/instructions.js'
+import { resetOutput, writeOutput } from './utils/jsonHandler.js'
 
 let allRegisters = initializeRegisters()
 let memory: Record<string, any> = {}
+let text: Record<string, any> = {}
 let data: Record<string, any> = {}
 
 const add = readFileSync('./src/input/Add.input.json').toString()
 
 const input: Types.Input = JSON.parse(add)
-const output: Partial<Types.Output> = {}
+const output: Types.Output = {} as Types.Output
 
+Object.keys(input).forEach((key)=> (input[key] ?? (input[key] = {})))
 /** --------------------------------------------------
  *
  * Initialize the registers, memory and data with the values from the input.
@@ -28,23 +31,29 @@ Object.entries(input.config?.mem ?? {}).forEach(([key, value]) => {
 	memory[key] = hexToBinary(value)
 })
 
-Object.entries(input.data?.data ?? {}).forEach(([key, value]) => {
+Object.entries(input?.data ?? {}).forEach(([key, value]) => {
 	data[key] = value
 })
 
-input.text = input.text.map(value =>{
-	return hexToBinary(value.replace('0x', ''))
-})
+text = input?.text ? input.text.map(value =>{
+		return hexToBinary(value.replace('0x', ''))
+	}) : {}
 
-
-console.log(removeInvalidRegisters(allRegisters))
-
-/** -------------------------------------------------- **/
-console.log(decodeInstruction('00100010000100010000000000000100', allRegisters))
-console.log(decodeInstruction(testString('000000 10001 00001 00000 00000 100010'), allRegisters))
-console.log('----------------------------------------------------')
-console.log(removeInvalidRegisters(allRegisters))
-
-function testString(str: string) {
-	return str.replaceAll(' ', '')
+if(text?.length) {
+	text.forEach((value, index) => {
+		output.hex = input.text[index]
+		output.text = decodeInstruction('00100010000100010000000000000100', allRegisters) ?? {}
+		output.regs = removeInvalidRegisters(allRegisters) ?? {}
+		output.mem = input.config?.mem ?? {}
+		output.stdout = ''
+		
+		resetOutput(output)
+		writeOutput('Add', output)
+	})
+}else{
+	output.regs = removeInvalidRegisters(allRegisters) ?? {}
+	output.mem = input.config?.mem ?? {}
+	output.stdout = {}
+	
+	writeOutput('add', output)
 }

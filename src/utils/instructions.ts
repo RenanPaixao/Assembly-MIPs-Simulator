@@ -161,7 +161,8 @@ function applyOperationInRsRt(instruction: string, allRegisters: Record<string, 
 			allRegisters[rdProperty] = rsRt.rs ^ rsRt.rt
 			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 		default:
-			throw new Error('Operation Not Found')
+			return
+			// throw new Error('Operation Not Found')
 	}
 }
 

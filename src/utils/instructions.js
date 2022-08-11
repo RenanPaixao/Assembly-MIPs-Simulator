@@ -150,7 +150,8 @@ function applyOperationInRsRt(instruction, allRegisters) {
             allRegisters[rdProperty] = rsRt.rs ^ rsRt.rt;
             return "".concat(instructionsOpCode[divInstruction.opCode], " ").concat(rdProperty, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
         default:
-            throw new Error('Operation Not Found');
+            return;
+        // throw new Error('Operation Not Found')
     }
 }
 export function decodeInstruction(instruction, allRegisters) {

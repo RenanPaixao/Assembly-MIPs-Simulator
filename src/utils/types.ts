@@ -7,26 +7,20 @@ interface Config {
 	}
 }
 
-interface Data {
-	data: {
-		[key: string]: string
-	}
-}
-
 export interface Input {
 	config?: Partial<Config>
-	data?: Data
-	text: string[]
+	data?: Record<string, any>
+	text: string[] | Record<string, any>
 }
 
 export interface Output {
-	hex: string
-	text: string
+	hex: string | {}
+	text: string | {}
 	regs: {
 		[key: string]: number
 	}
 	mem: {
 		[key: string]: number
 	}
-	stdout?: 'overflow'
+	stdout?: 'overflow' | {}
 }
