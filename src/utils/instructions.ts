@@ -7,14 +7,14 @@ const instructionsOpCode = {
 	'000001': 'bltz', //done
 	'000110': 'blez', //done
 	'000101': 'bne', //done
-	'100000': 'lb',
-	'100100': 'lbu',
-	'101111': 'lui',
-	'100011': 'lw',
+	'100000': 'lb', //done
+	'100100': 'lbu', //done
+	'101111': 'lui', //done
+	'100011': 'lw', //done
 	'001101': 'ori',
-	'101000': 'sb',
+	'101000': 'sb', //done
 	'001010': 'slti',
-	'101011': 'sw',
+	'101011': 'sw', //done
 	'001110': 'xori',
 	'000000': 'opZero' // opZero indicate instructions R type
 }
@@ -166,8 +166,7 @@ function applyOperationInRsRt(instruction: string, allRegisters: Record<string, 
 	}
 }
 
-export function decodeInstruction(instruction: string, allRegisters: Record<string, any>, output: any) {
-	applyOperationInRsRt(instruction, allRegisters)
+export function decodeInstruction(instruction: string, allRegisters: Record<string, any>, output: any, memory: any) {
 	const instructionName = instructionsOpCode[getOpCode(instruction)]
 
 	if (getOpCode(instruction) !== '000000') {
@@ -193,6 +192,18 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 				return blez(instruction, allRegisters)
 			case '000111':
 				return bgtz(instruction, allRegisters)
+			case '100000':
+				return lb(instruction, allRegisters, memory)
+			case '100100':
+				return lbu(instruction, allRegisters, memory)
+			case '100011':
+				return lw(instruction, allRegisters, memory)
+			case '101111':
+				return lui(instruction, allRegisters, memory)
+			case '101011':
+				return sw(instruction, allRegisters, memory)
+			case '101000':
+				return sb(instruction, allRegisters, memory)
 			default:
 				allRegisters.pc -= 4
 				console.log('instrução não encontrada')
@@ -230,6 +241,7 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 				
 				//@ts-ignore
 				output.stdout = error.message
+				break 
 			} 
 		case '100001':
 			return addu(instruction, allRegisters)
@@ -304,6 +316,70 @@ function addiu(instruction: string, allRegisters: Record<string, any>) {
 	allRegisters[`$${objectTransformed.rt}`] = operationResult
 
 	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rt}, $${objectTransformed.rs}, ${objectTransformed.constant}`
+}
+
+function lb(instruction: string, allRegisters: Record<string, any>, memory: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	const address = allRegisters[`$${objectTransformed.rs}`] + objectTransformed.constant
+	const value = memory[address]
+	
+	allRegisters[`$${objectTransformed.rt}`] = value ?? allRegisters[`$${objectTransformed.rt}`]
+	
+	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rt}, ${objectTransformed.constant}($${objectTransformed.rs})`
+}
+
+function lbu(instruction: string, allRegisters: Record<string, any>, memory: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	const address = allRegisters[`$${objectTransformed.rs}`] + objectTransformed.constant
+	const value = parseInt(memory[address])
+	
+	allRegisters[`$${objectTransformed.rt}`] = value ? parseInt(value.toString(2).substring(24), 2) : allRegisters[`$${objectTransformed.rt}`]
+	
+	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rt}, ${objectTransformed.constant}($${objectTransformed.rs})`
+}
+
+function lui(instruction: string, allRegisters: Record<string, any>, memory: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+
+	allRegisters[`$${objectTransformed.rt}`] = objectTransformed.constant << 16
+	
+	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rt}, ${objectTransformed.constant}`
+}
+
+function sw(instruction: string, allRegisters: Record<string, any>, memory: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	const address = allRegisters[`$${objectTransformed.rs}`] + objectTransformed.constant
+	
+	memory[address] = allRegisters[`$${objectTransformed.rt}`]
+	
+	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rt}, ${objectTransformed.constant}($${objectTransformed.rs})`
+	
+}
+
+function sb(instruction: string, allRegisters: Record<string, any>, memory: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	const address = allRegisters[`$${objectTransformed.rs}`] + objectTransformed.constant
+	
+	memory[address] = allRegisters[`$${objectTransformed.rt}`]
+	
+	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rt}, ${objectTransformed.constant}($${objectTransformed.rs})`
+	
+}
+
+function lw(instruction: string, allRegisters: Record<string, any>, memory: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	const address = allRegisters[`$${objectTransformed.rs}`] + objectTransformed.constant
+	const value = memory[address]
+	
+	allRegisters[`$${objectTransformed.rt}`] = value ?? allRegisters[`$${objectTransformed.rt}`]
+	
+	return `${instructionsOpCode[divInstruction.opCode]} $${objectTransformed.rt}, ${objectTransformed.constant}($${objectTransformed.rs})`
 }
 
 function andi(instruction: string, allRegisters: Record<string, any>) {

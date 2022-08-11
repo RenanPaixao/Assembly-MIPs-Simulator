@@ -153,8 +153,7 @@ function applyOperationInRsRt(instruction, allRegisters) {
         // throw new Error('Operation Not Found')
     }
 }
-export function decodeInstruction(instruction, allRegisters, output) {
-    applyOperationInRsRt(instruction, allRegisters);
+export function decodeInstruction(instruction, allRegisters, output, memory) {
     var instructionName = instructionsOpCode[getOpCode(instruction)];
     if (getOpCode(instruction) !== '000000') {
         var instructionI = divInstructionI(instruction);
@@ -177,6 +176,18 @@ export function decodeInstruction(instruction, allRegisters, output) {
                 return blez(instruction, allRegisters);
             case '000111':
                 return bgtz(instruction, allRegisters);
+            case '100000':
+                return lb(instruction, allRegisters, memory);
+            case '100100':
+                return lbu(instruction, allRegisters, memory);
+            case '100011':
+                return lw(instruction, allRegisters, memory);
+            case '101111':
+                return lui(instruction, allRegisters, memory);
+            case '101011':
+                return sw(instruction, allRegisters, memory);
+            case '101000':
+                return sb(instruction, allRegisters, memory);
             default:
                 allRegisters.pc -= 4;
                 console.log('instrução não encontrada');
@@ -209,6 +220,7 @@ export function decodeInstruction(instruction, allRegisters, output) {
                 console.log(error.message);
                 //@ts-ignore
                 output.stdout = error.message;
+                break;
             }
         case '100001':
             return addu(instruction, allRegisters);
@@ -270,6 +282,50 @@ function addiu(instruction, allRegisters) {
     var operationResult = allRegisters["$".concat(objectTransformed.rs)] + objectTransformed.constant;
     allRegisters["$".concat(objectTransformed.rt)] = operationResult;
     return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.constant);
+}
+function lb(instruction, allRegisters, memory) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var address = allRegisters["$".concat(objectTransformed.rs)] + objectTransformed.constant;
+    var value = memory[address];
+    allRegisters["$".concat(objectTransformed.rt)] = value !== null && value !== void 0 ? value : allRegisters["$".concat(objectTransformed.rt)];
+    return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant, "($").concat(objectTransformed.rs, ")");
+}
+function lbu(instruction, allRegisters, memory) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var address = allRegisters["$".concat(objectTransformed.rs)] + objectTransformed.constant;
+    var value = parseInt(memory[address]);
+    allRegisters["$".concat(objectTransformed.rt)] = value ? parseInt(value.toString(2).substring(24), 2) : allRegisters["$".concat(objectTransformed.rt)];
+    return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant, "($").concat(objectTransformed.rs, ")");
+}
+function lui(instruction, allRegisters, memory) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    allRegisters["$".concat(objectTransformed.rt)] = objectTransformed.constant << 16;
+    return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant);
+}
+function sw(instruction, allRegisters, memory) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var address = allRegisters["$".concat(objectTransformed.rs)] + objectTransformed.constant;
+    memory[address] = allRegisters["$".concat(objectTransformed.rt)];
+    return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant, "($").concat(objectTransformed.rs, ")");
+}
+function sb(instruction, allRegisters, memory) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var address = allRegisters["$".concat(objectTransformed.rs)] + objectTransformed.constant;
+    memory[address] = allRegisters["$".concat(objectTransformed.rt)];
+    return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant, "($").concat(objectTransformed.rs, ")");
+}
+function lw(instruction, allRegisters, memory) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var address = allRegisters["$".concat(objectTransformed.rs)] + objectTransformed.constant;
+    var value = memory[address];
+    allRegisters["$".concat(objectTransformed.rt)] = value !== null && value !== void 0 ? value : allRegisters["$".concat(objectTransformed.rt)];
+    return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant, "($").concat(objectTransformed.rs, ")");
 }
 function andi(instruction, allRegisters) {
     var divInstruction = divInstructionI(instruction);
