@@ -41,7 +41,7 @@ fileNames.forEach(function (name) {
             var instructionOutput = {};
             resetOutput(instructionOutput);
             instructionOutput.hex = input.text[index];
-            instructionOutput.text = (_a = decodeInstruction(value, allRegisters)) !== null && _a !== void 0 ? _a : {};
+            instructionOutput.text = (_a = decodeInstruction(value, allRegisters, instructionOutput)) !== null && _a !== void 0 ? _a : {};
             instructionOutput.regs = (_b = removeInvalidRegisters(allRegisters)) !== null && _b !== void 0 ? _b : {};
             instructionOutput.mem = (_d = (_c = input.config) === null || _c === void 0 ? void 0 : _c.mem) !== null && _d !== void 0 ? _d : {};
             instructionOutput.stdout = (_e = instructionOutput.stdout) !== null && _e !== void 0 ? _e : {};

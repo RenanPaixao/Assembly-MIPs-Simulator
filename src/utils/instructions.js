@@ -71,6 +71,7 @@ function divInstructionJ(instruction) {
         jumpTargetAdsress: instruction.substring(6, 32)
     };
 }
+var overflowMsg = 'Overflow';
 function checkOverflow(op, value1, value2) {
     var minValue = Number.MIN_VALUE;
     var maxValue = Number.MAX_VALUE;
@@ -152,7 +153,7 @@ function applyOperationInRsRt(instruction, allRegisters) {
         // throw new Error('Operation Not Found')
     }
 }
-export function decodeInstruction(instruction, allRegisters) {
+export function decodeInstruction(instruction, allRegisters, output) {
     applyOperationInRsRt(instruction, allRegisters);
     var instructionName = instructionsOpCode[getOpCode(instruction)];
     if (getOpCode(instruction) !== '000000') {
@@ -200,7 +201,15 @@ export function decodeInstruction(instruction, allRegisters) {
     var instructionR = divInstructionR(instruction);
     switch (instructionR.opcodeExtension) {
         case '100000':
-            return add(instruction, allRegisters);
+            try {
+                return add(instruction, allRegisters);
+            }
+            catch (error) {
+                //@ts-ignore
+                console.log(error.message);
+                //@ts-ignore
+                output.stdout = error.message;
+            }
         case '100001':
             return addu(instruction, allRegisters);
         case '011010':
@@ -315,7 +324,10 @@ function bgtz(instruction, allRegisters) {
 function add(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimalR(divInstruction);
-    //Precisa adicionar a checagem de overflow
+    //Checagem de overflow
+    if (checkOverflow(divInstruction.opcodeExtension, allRegisters["$".concat(objectTransformed.rs)], allRegisters["$".concat(objectTransformed.rt)])) {
+        throw new Error(overflowMsg);
+    }
     var operationResult = allRegisters["$".concat(objectTransformed.rs)] + allRegisters["$".concat(objectTransformed.rt)];
     allRegisters["$".concat(objectTransformed.rd)] = operationResult;
     return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);

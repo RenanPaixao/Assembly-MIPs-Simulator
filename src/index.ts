@@ -49,7 +49,7 @@ fileNames.forEach((name)=>{
 			resetOutput(instructionOutput)
 			
 			instructionOutput.hex = input.text[index]
-			instructionOutput.text = decodeInstruction(value, allRegisters) ?? {}
+			instructionOutput.text = decodeInstruction(value, allRegisters, instructionOutput) ?? {}
 			instructionOutput.regs = removeInvalidRegisters(allRegisters) ?? {}
 			instructionOutput.mem = input.config?.mem ?? {}
 			instructionOutput.stdout = instructionOutput.stdout ?? {}

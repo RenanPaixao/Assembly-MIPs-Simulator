@@ -78,6 +78,8 @@ function divInstructionJ(instruction: string) {
 	}
 }
 
+const overflowMsg = 'Overflow'
+
 function checkOverflow(op: string, value1: number, value2: number) {
 
 	let minValue = Number.MIN_VALUE
@@ -164,7 +166,7 @@ function applyOperationInRsRt(instruction: string, allRegisters: Record<string, 
 	}
 }
 
-export function decodeInstruction(instruction: string, allRegisters: Record<string, any>) {
+export function decodeInstruction(instruction: string, allRegisters: Record<string, any>, output: any) {
 	applyOperationInRsRt(instruction, allRegisters)
 	const instructionName = instructionsOpCode[getOpCode(instruction)]
 
@@ -220,7 +222,15 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 
 	switch (instructionR.opcodeExtension) {
 		case '100000':
-			return add(instruction, allRegisters)
+			try {
+				return add(instruction, allRegisters)
+			} catch (error) {
+				//@ts-ignore
+				console.log(error.message)
+				
+				//@ts-ignore
+				output.stdout = error.message
+			} 
 		case '100001':
 			return addu(instruction, allRegisters)
 		case '011010':
@@ -375,9 +385,11 @@ function bgtz(instruction: string, allRegisters: Record<string, any>) {
 function add(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
-
-	//Precisa adicionar a checagem de overflow
-
+	
+	//Checagem de overflow
+	if(checkOverflow(divInstruction.opcodeExtension, allRegisters[`$${objectTransformed.rs}`], allRegisters[`$${objectTransformed.rt}`])) {
+		throw new Error(overflowMsg)
+	}
 	const operationResult = allRegisters[`$${objectTransformed.rs}`] + allRegisters[`$${objectTransformed.rt}`]
 
 	allRegisters[`$${objectTransformed.rd}`] = operationResult
