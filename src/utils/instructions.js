@@ -15,8 +15,7 @@ var instructionsOpCode = {
     '101000': 'sb',
     '001010': 'slti',
     '101011': 'sw',
-    '001110': 'xori',
-    '000000': 'opZero' // opZero indicate instructions R type
+    '001110': 'xori' //done
 };
 function divInstructionI(instruction) {
     return {
@@ -85,6 +84,11 @@ function checkOverflow(op, value1, value2) {
             break;
         case '100010':
             if ((cont1 - cont2) > maxValue || (cont1 - cont2) < minValue) {
+                return true;
+            }
+            break;
+        case '001000':
+            if ((cont1 + cont2) > maxValue || (cont1 + cont2) < minValue) {
                 return true;
             }
             break;
@@ -162,7 +166,16 @@ export function decodeInstruction(instruction, allRegisters, output) {
         allRegisters.pc += 4;
         switch (instructionI.opCode) {
             case '001000':
-                return addi(instruction, allRegisters);
+                try {
+                    return andi(instruction, allRegisters);
+                }
+                catch (error) {
+                    //@ts-ignore
+                    console.log(error.message);
+                    //@ts-ignore
+                    output.stdout = error.message;
+                }
+                break;
             case '001001':
                 return addiu(instruction, allRegisters);
             case '001100':
@@ -177,6 +190,12 @@ export function decodeInstruction(instruction, allRegisters, output) {
                 return blez(instruction, allRegisters);
             case '000111':
                 return bgtz(instruction, allRegisters);
+            case '001010':
+                return slti(instruction, allRegisters);
+            case '001101':
+                return ori(instruction, allRegisters);
+            case '001110':
+                return xori(instruction, allRegisters);
             default:
                 allRegisters.pc -= 4;
                 console.log('instrução não encontrada');
@@ -210,6 +229,7 @@ export function decodeInstruction(instruction, allRegisters, output) {
                 //@ts-ignore
                 output.stdout = error.message;
             }
+            break;
         case '100001':
             return addu(instruction, allRegisters);
         case '011010':
@@ -217,7 +237,16 @@ export function decodeInstruction(instruction, allRegisters, output) {
         case '011011':
             return divu(instruction, allRegisters);
         case '100010':
-            return sub(instruction, allRegisters);
+            try {
+                return sub(instruction, allRegisters);
+            }
+            catch (error) {
+                //@ts-ignore
+                console.log(error.message);
+                //@ts-ignore
+                output.stdout = error.message;
+            }
+            break;
         case '100011':
             return subu(instruction, allRegisters);
         case '011000':
@@ -246,20 +275,18 @@ export function decodeInstruction(instruction, allRegisters, output) {
     }
 }
 // Lembrar de usar o script antes de codar (yarn tsc:w)
-// pra rodar o arquivo, verifica se o terminal tá na pasta raiz (Assembly-MIPs-Simulator-in-Node) e roda node src
-//Criar funções de instruções que faltam
-//Passo a passo pra testar
-// 1. adiciona o case no switch da função decodeInstruction
-// 2. a função decode instruction está sendo chamada dentro no index.ts
-// 3. usa um console.log no index.ts usando a função com uma instrução qualquer
-/**
- * Update a register with operation result and returns a parsed instruction
- */
+/* ---------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------*/
 //Funções para as instruções tipo I
 function addi(instruction, allRegisters) {
     var divInstruction = divInstructionI(instruction);
     var objectTransformed = objectToDecimal(divInstruction);
-    //Precisa adicionar a checagem de overflow
+    //Checagem de overflow
+    if (checkOverflow(divInstruction.opCode, allRegisters["$".concat(objectTransformed.rs)], objectTransformed.constant)) {
+        throw new Error(overflowMsg);
+    }
     var operationResult = allRegisters["$".concat(objectTransformed.rs)] + objectTransformed.constant;
     allRegisters["$".concat(objectTransformed.rt)] = operationResult;
     return "".concat(instructionsOpCode[divInstruction.opCode], " $").concat(objectTransformed.rt, ", $").concat(objectTransformed.rs, ", ").concat(objectTransformed.constant);
@@ -273,7 +300,10 @@ function addiu(instruction, allRegisters) {
 }
 function andi(instruction, allRegisters) {
     var divInstruction = divInstructionI(instruction);
-    //const objectTransformed = objectToDecimal(divInstruction)
+    var objectTransformed = objectToDecimal(divInstruction);
+    var rsProperty = "$".concat(objectTransformed.rs);
+    allRegisters[rsProperty] = allRegisters["$".concat(objectTransformed.rt)] & objectTransformed.constant;
+    return "".concat(instructionsOpCode[divInstruction.opCode], " ").concat(rsProperty, ", $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant);
 }
 function beq(instruction, allRegisters) {
     var divInstruction = divInstructionI(instruction);
@@ -314,6 +344,27 @@ function bgtz(instruction, allRegisters) {
         allRegisters.pc += (objectTransformed.constant * 4);
         allRegisters.pc -= 4;
     }
+}
+function slti(instruction, allRegisters) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt);
+    allRegisters["$".concat(objectTransformed.rs)] = rsRt.rt < objectTransformed.constant ? 1 : 0;
+    return "".concat(functions[divInstruction.opCode], " $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant);
+}
+function ori(instruction, allRegisters) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var rsProperty = "$".concat(objectTransformed.rs);
+    allRegisters[rsProperty] = allRegisters["$".concat(objectTransformed.rt)] | objectTransformed.constant;
+    return "".concat(instructionsOpCode[divInstruction.opCode], " ").concat(rsProperty, ", $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant);
+}
+function xori(instruction, allRegisters) {
+    var divInstruction = divInstructionI(instruction);
+    var objectTransformed = objectToDecimal(divInstruction);
+    var rsProperty = "$".concat(objectTransformed.rs);
+    allRegisters[rsProperty] = allRegisters["$".concat(objectTransformed.rt)] ^ objectTransformed.constant;
+    return "".concat(instructionsOpCode[divInstruction.opCode], " ").concat(rsProperty, ", $").concat(objectTransformed.rt, ", ").concat(objectTransformed.constant);
 }
 /* ----------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
@@ -376,7 +427,10 @@ function divu(instruction, allRegisters) {
 function sub(instruction, allRegisters) {
     var divInstruction = divInstructionR(instruction);
     var objectTransformed = objectToDecimalR(divInstruction);
-    //Precisa adicionar a checagem de overflow
+    //Checagem de Overflow
+    if (checkOverflow(divInstruction.opcodeExtension, allRegisters["$".concat(objectTransformed.rs)], allRegisters["$".concat(objectTransformed.rt)])) {
+        throw new Error(overflowMsg);
+    }
     var operationResult = allRegisters["$".concat(objectTransformed.rs)] - allRegisters["$".concat(objectTransformed.rt)];
     allRegisters["$".concat(objectTransformed.rd)] = operationResult;
     return "".concat(functions[divInstruction.opcodeExtension], " $").concat(objectTransformed.rd, ", $").concat(objectTransformed.rs, ", $").concat(objectTransformed.rt);
