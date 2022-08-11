@@ -10,7 +10,7 @@ const registers: Record<string, any> = Object.fromEntries([...numericRegisters, 
 /** Add values different from 0 to the registers that need it. **/
 registers.$28 = 268468224
 registers.$29 = 2147479548
-registers.lo = 4194304
+registers.pc = 4194304
 	
 	return registers
 }

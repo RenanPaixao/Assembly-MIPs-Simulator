@@ -1,21 +1,21 @@
 const instructionsOpCode = {
-	'001000': 'addi', //done
-	'001001': 'addiu', //done
-	'001100': 'andi', //done
-	'000111': 'bgtz', //done
-	'000100': 'beq', //done
-	'000001': 'bltz', //done
-	'000110': 'blez', //done
-	'000101': 'bne', //done
+	'001000': 'addi',
+	'001001': 'addiu',
+	'001100': 'andi',
+	'000111': 'bgtz',
+	'000100': 'beq',
+	'000001': 'bltz',
+	'000110': 'blez',
+	'000101': 'bne',
 	'100000': 'lb',
 	'100100': 'lbu',
 	'101111': 'lui',
 	'100011': 'lw',
-	'001101': 'ori', //done
+	'001101': 'ori',
 	'101000': 'sb',
-	'001010': 'slti', //done
+	'001010': 'slti',
 	'101011': 'sw',
-	'001110': 'xori' //done
+	'001110': 'xori'
 }
 
 function divInstructionI(instruction: string) {
@@ -29,27 +29,27 @@ function divInstructionI(instruction: string) {
 
 
 const functions = {
-	'100000': 'add', //done
-	'100001': 'addu', //done
-	'100100': 'and', //done
-	'011010': 'div', //done
-	'011011': 'divu', //done
+	'100000': 'add',
+	'100001': 'addu',
+	'100100': 'and',
+	'011010': 'div',
+	'011011': 'divu',
 	'001000': 'jr',
-	'010000': 'mfhi', //done
-	'010010': 'mflo', //done
-	'011000': 'mult', //done
-	'011001': 'multu', //done
-	'100111': 'nor', // done
-	'100101': 'or', // done
-	'000000': 'sll', // done
-	'000100': 'sllv', //done
-	'101010': 'slt', //done
-	'000011': 'sra', //done
-	'000111': 'srav', //done
-	'000010': 'srl', //done
-	'000110': 'srlv',//done
-	'100010': 'sub', //done
-	'100011': 'subu', //done
+	'010000': 'mfhi',
+	'010010': 'mflo',
+	'011000': 'mult',
+	'011001': 'multu',
+	'100111': 'nor',
+	'100101': 'or',
+	'000000': 'sll',
+	'000100': 'sllv',
+	'101010': 'slt',
+	'000011': 'sra',
+	'000111': 'srav',
+	'000010': 'srl',
+	'000110': 'srlv',
+	'100010': 'sub',
+	'100011': 'subu',
 	'001100': 'syscall',
 	'100110': 'xor', // nor
 }
@@ -73,7 +73,7 @@ const instructionsTypeJ = {
 function divInstructionJ(instruction: string) {
 	return {
 		opCode: getOpCode(instruction),
-		jumpTargetAdsress: instruction.substring(6, 32)
+		jumpTargetAddress: instruction.substring(6, 32)
 	}
 }
 
