@@ -14,7 +14,7 @@ let data: Record<string, any> = {}
 const add = readFileSync('./src/input/Add.input.json').toString()
 
 const input: Types.Input = JSON.parse(add)
-const output: Types.Output = {} as Types.Output
+let output: Types.Output[] = [] as Types.Output[]
 
 Object.keys(input).forEach((key)=> (input[key] ?? (input[key] = {})))
 /** --------------------------------------------------
@@ -39,21 +39,28 @@ text = input?.text ? input.text.map(value =>{
 		return hexToBinary(value.replace('0x', ''))
 	}) : {}
 
+
 if(text?.length) {
 	text.forEach((value, index) => {
-		output.hex = input.text[index]
-		output.text = decodeInstruction('00100010000100010000000000000100', allRegisters) ?? {}
-		output.regs = removeInvalidRegisters(allRegisters) ?? {}
-		output.mem = input.config?.mem ?? {}
-		output.stdout = ''
 		
-		resetOutput(output)
-		writeOutput('Add', output)
+		const instructionOutput = {} as Types.Output
+		resetOutput(instructionOutput)
+		
+		instructionOutput.hex = input.text[index]
+		instructionOutput.text = decodeInstruction(value, allRegisters) ?? {}
+		instructionOutput.regs = removeInvalidRegisters(allRegisters) ?? {}
+		instructionOutput.mem = input.config?.mem ?? {}
+		instructionOutput.stdout = instructionOutput.stdout ?? {}
+		
+		output.push(instructionOutput)
 	})
 }else{
-	output.regs = removeInvalidRegisters(allRegisters) ?? {}
-	output.mem = input.config?.mem ?? {}
-	output.stdout = {}
+	const instructionOutput = {} as Types.Output
 	
-	writeOutput('add', output)
+	instructionOutput.regs = removeInvalidRegisters(allRegisters) ?? {}
+	instructionOutput.mem = input.config?.mem ?? {}
+	instructionOutput.stdout = {}
+	
 }
+
+writeOutput('Add', output)

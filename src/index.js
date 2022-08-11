@@ -11,7 +11,7 @@ var text = {};
 var data = {};
 var add = readFileSync('./src/input/Add.input.json').toString();
 var input = JSON.parse(add);
-var output = {};
+var output = [];
 Object.keys(input).forEach(function (key) { var _a; return ((_a = input[key]) !== null && _a !== void 0 ? _a : (input[key] = {})); });
 /** --------------------------------------------------
  *
@@ -35,20 +35,22 @@ text = (input === null || input === void 0 ? void 0 : input.text) ? input.text.m
 }) : {};
 if (text === null || text === void 0 ? void 0 : text.length) {
     text.forEach(function (value, index) {
-        var _a, _b, _c, _d;
-        output.hex = input.text[index];
-        output.text = (_a = decodeInstruction('00100010000100010000000000000100', allRegisters)) !== null && _a !== void 0 ? _a : {};
-        output.regs = (_b = removeInvalidRegisters(allRegisters)) !== null && _b !== void 0 ? _b : {};
-        output.mem = (_d = (_c = input.config) === null || _c === void 0 ? void 0 : _c.mem) !== null && _d !== void 0 ? _d : {};
-        output.stdout = '';
-        resetOutput(output);
-        writeOutput('Add', output);
+        var _a, _b, _c, _d, _e;
+        var instructionOutput = {};
+        resetOutput(instructionOutput);
+        instructionOutput.hex = input.text[index];
+        instructionOutput.text = (_a = decodeInstruction(value, allRegisters)) !== null && _a !== void 0 ? _a : {};
+        instructionOutput.regs = (_b = removeInvalidRegisters(allRegisters)) !== null && _b !== void 0 ? _b : {};
+        instructionOutput.mem = (_d = (_c = input.config) === null || _c === void 0 ? void 0 : _c.mem) !== null && _d !== void 0 ? _d : {};
+        instructionOutput.stdout = (_e = instructionOutput.stdout) !== null && _e !== void 0 ? _e : {};
+        output.push(instructionOutput);
     });
 }
 else {
-    output.regs = (_f = removeInvalidRegisters(allRegisters)) !== null && _f !== void 0 ? _f : {};
-    output.mem = (_h = (_g = input.config) === null || _g === void 0 ? void 0 : _g.mem) !== null && _h !== void 0 ? _h : {};
-    output.stdout = {};
-    writeOutput('add', output);
+    var instructionOutput = {};
+    instructionOutput.regs = (_f = removeInvalidRegisters(allRegisters)) !== null && _f !== void 0 ? _f : {};
+    instructionOutput.mem = (_h = (_g = input.config) === null || _g === void 0 ? void 0 : _g.mem) !== null && _h !== void 0 ? _h : {};
+    instructionOutput.stdout = {};
 }
+writeOutput('Add', output);
 //# sourceMappingURL=index.js.map

@@ -7,8 +7,6 @@ const instructionsOpCode = {
 	'000001': 'bltz',
 	'000110': 'blez',
 	'000101': 'bne',
-	'000010': 'j',
-	'000011': 'jal',
 	'100000': 'lb',
 	'100100': 'lbu',
 	'101111': 'lui',
@@ -184,13 +182,29 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 			case '001100':
 				return andi(instruction, allRegisters)
 			default:
-				console.log('------------------------------')
 				allRegisters.pc -= 4
 				return
 			// throw new Error('Instruction not found')
 		}
 	}
-
+	
+	/* -----------------------------------------------------------------------------------------------------*/
+	if(getOpCode(instruction) === '000010' || getOpCode(instruction) === '000011') {
+		
+		const instructionJ = divInstructionJ(instruction)
+		
+		switch(instructionJ.opCode) {
+			case '000010':
+				return j(instruction, allRegisters)
+			case '000011':
+				return jal(instruction, allRegisters)
+			default:
+				allRegisters.pc -= 4
+				console.log('instrução não encontrada')
+				return
+		}
+	}
+	
 	/*------------------------------------------------------------------------------------------------------------------*/
 	const instructionR = divInstructionR(instruction)
 
@@ -229,19 +243,7 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 			return sll(instruction, allRegisters)
 		default:
 			allRegisters.pc -= 4
-			console.log('---------------------------')
-		// throw new Error('Instruction not found!')
-	}
-
-	/* -----------------------------------------------------------------------------------------------------*/
-	const instructionJ = divInstructionJ(instruction)
-
-	switch (instructionJ.opCode) {
-		case '000010':
-			return j(instruction, allRegisters)
-		case '000011':
-			return jal(instruction, allRegisters)
-		default:
+			console.log('instrução não encontrada')
 	}
 }
 
