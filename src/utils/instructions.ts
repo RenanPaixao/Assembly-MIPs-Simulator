@@ -1,22 +1,21 @@
 const instructionsOpCode = {
 	'001000': 'addi', //done
 	'001001': 'addiu', //done
-	'001100': 'andi', //in progress
+	'001100': 'andi', //done
 	'000111': 'bgtz', //done
 	'000100': 'beq', //done
 	'000001': 'bltz', //done
 	'000110': 'blez', //done
 	'000101': 'bne', //done
-	'100000': 'lb', //done
-	'100100': 'lbu', //done
-	'101111': 'lui', //done
-	'100011': 'lw', //done
-	'001101': 'ori',
-	'101000': 'sb', //done
-	'001010': 'slti',
-	'101011': 'sw', //done
-	'001110': 'xori',
-	'000000': 'opZero' // opZero indicate instructions R type
+	'100000': 'lb',
+	'100100': 'lbu',
+	'101111': 'lui',
+	'100011': 'lw',
+	'001101': 'ori', //done
+	'101000': 'sb',
+	'001010': 'slti', //done
+	'101011': 'sw',
+	'001110': 'xori' //done
 }
 
 function divInstructionI(instruction: string) {
@@ -96,7 +95,13 @@ function checkOverflow(op: string, value1: number, value2: number) {
 		case '100010':
 			if ((cont1 - cont2) > maxValue || (cont1 - cont2) < minValue) {
 				return true
-			} break
+			}
+			break
+		case '001000':
+			if ((cont1 + cont2) > maxValue || (cont1 + cont2) < minValue) {
+				return true
+			}
+			break
 		default:
 			break
 	}
@@ -161,8 +166,8 @@ function applyOperationInRsRt(instruction: string, allRegisters: Record<string, 
 			allRegisters[rdProperty] = rsRt.rs ^ rsRt.rt
 			return `${instructionsOpCode[divInstruction.opCode]} ${rdProperty}, $${objectTransformed.rs}, $${objectTransformed.rt}`
 		default:
+			console.log('Operation Not Found')
 			return
-			// throw new Error('Operation Not Found')
 	}
 }
 
@@ -177,7 +182,16 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 
 		switch (instructionI.opCode) {
 			case '001000':
-				return addi(instruction, allRegisters)
+				try {
+					return addi(instruction, allRegisters)
+				} catch (error) {
+					//@ts-ignore
+					console.log(error.message)
+	
+					//@ts-ignore
+					output.stdout = error.message
+				}
+				break
 			case '001001':
 				return addiu(instruction, allRegisters)
 			case '001100':
@@ -192,6 +206,12 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 				return blez(instruction, allRegisters)
 			case '000111':
 				return bgtz(instruction, allRegisters)
+			case '001010':
+				return slti(instruction, allRegisters)
+			case '001101':
+				return ori(instruction, allRegisters)
+			case '001110':
+				return xori(instruction, allRegisters)
 			case '100000':
 				return lb(instruction, allRegisters, memory)
 			case '100100':
@@ -210,7 +230,7 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 				return
 		}
 	}
-	
+
 	/* -----------------------------------------------------------------------------------------------------*/
 	if(getOpCode(instruction) === '000010' || getOpCode(instruction) === '000011') {
 		
@@ -227,7 +247,7 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 				return
 		}
 	}
-	
+
 	/*------------------------------------------------------------------------------------------------------------------*/
 	const instructionR = divInstructionR(instruction)
 
@@ -238,11 +258,11 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 			} catch (error) {
 				//@ts-ignore
 				console.log(error.message)
-				
+
 				//@ts-ignore
 				output.stdout = error.message
-				break 
-			} 
+			}
+			break
 		case '100001':
 			return addu(instruction, allRegisters)
 		case '011010':
@@ -250,7 +270,16 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 		case '011011':
 			return divu(instruction, allRegisters)
 		case '100010':
-			return sub(instruction, allRegisters)
+			try {
+				return sub(instruction, allRegisters)
+			} catch (error) {
+				//@ts-ignore
+				console.log(error.message)
+
+				//@ts-ignore
+				output.stdout = error.message
+			}
+			break
 		case '100011':
 			return subu(instruction, allRegisters)
 		case '011000':
@@ -279,18 +308,10 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 	}
 }
 
-// Lembrar de usar o script antes de codar (yarn tsc:w)
-// pra rodar o arquivo, verifica se o terminal tá na pasta raiz (Assembly-MIPs-Simulator-in-Node) e roda node src
-
-//Criar funções de instruções que faltam
-
-//Passo a passo pra testar
-// 1. adiciona o case no switch da função decodeInstruction
-// 2. a função decode instruction está sendo chamada dentro no index.ts
-// 3. usa um console.log no index.ts usando a função com uma instrução qualquer
-/**
- * Update a register with operation result and returns a parsed instruction
- */
+/* ---------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------*/
 
 //Funções para as instruções tipo I
 
@@ -298,7 +319,10 @@ function addi(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionI(instruction)
 	const objectTransformed = objectToDecimal(divInstruction)
 
-	//Precisa adicionar a checagem de overflow
+	//Checagem de overflow
+	if (checkOverflow(divInstruction.opCode, allRegisters[`$${objectTransformed.rs}`], objectTransformed.constant)) {
+		throw new Error(overflowMsg)
+	}
 
 	const operationResult = allRegisters[`$${objectTransformed.rs}`] + objectTransformed.constant
 
@@ -384,8 +408,12 @@ function lw(instruction: string, allRegisters: Record<string, any>, memory: Reco
 
 function andi(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionI(instruction)
-	//const objectTransformed = objectToDecimal(divInstruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	const rsProperty = `$${objectTransformed.rs}`
 
+	allRegisters[rsProperty] = allRegisters[`$${objectTransformed.rt}`] & objectTransformed.constant
+
+	return `${instructionsOpCode[divInstruction.opCode]} ${rsProperty}, $${objectTransformed.rt}, ${objectTransformed.constant}`
 }
 
 function beq(instruction: string, allRegisters: Record<string, any>) {
@@ -448,6 +476,35 @@ function bgtz(instruction: string, allRegisters: Record<string, any>) {
 	}
 }
 
+function slti(instruction: string, allRegisters: Record<string, any>): string {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	const rsRt = getRsAndRtFromBinary(allRegisters, objectTransformed.rs, objectTransformed.rt)
+
+	allRegisters[`$${objectTransformed.rs}`] = rsRt.rt < objectTransformed.constant ? 1 : 0
+
+	return `${functions[divInstruction.opCode]} $${objectTransformed.rs}, $${objectTransformed.rt}, ${objectTransformed.constant}`
+}
+
+function ori(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	const rsProperty = `$${objectTransformed.rs}`
+
+	allRegisters[rsProperty] = allRegisters[`$${objectTransformed.rt}`] | objectTransformed.constant
+
+	return `${instructionsOpCode[divInstruction.opCode]} ${rsProperty}, $${objectTransformed.rt}, ${objectTransformed.constant}`
+}
+
+function xori(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+	const rsProperty = `$${objectTransformed.rs}`
+
+	allRegisters[rsProperty] = allRegisters[`$${objectTransformed.rt}`] ^ objectTransformed.constant
+
+	return `${instructionsOpCode[divInstruction.opCode]} ${rsProperty}, $${objectTransformed.rt}, ${objectTransformed.constant}`
+}
 
 /* ----------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
@@ -461,11 +518,12 @@ function bgtz(instruction: string, allRegisters: Record<string, any>) {
 function add(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
-	
+
 	//Checagem de overflow
 	if(checkOverflow(divInstruction.opcodeExtension, allRegisters[`$${objectTransformed.rs}`], allRegisters[`$${objectTransformed.rt}`])) {
 		throw new Error(overflowMsg)
 	}
+
 	const operationResult = allRegisters[`$${objectTransformed.rs}`] + allRegisters[`$${objectTransformed.rt}`]
 
 	allRegisters[`$${objectTransformed.rd}`] = operationResult
@@ -537,7 +595,10 @@ function sub(instruction: string, allRegisters: Record<string, any>) {
 	const divInstruction = divInstructionR(instruction)
 	const objectTransformed = objectToDecimalR(divInstruction)
 
-	//Precisa adicionar a checagem de overflow
+	//Checagem de Overflow
+	if (checkOverflow(divInstruction.opcodeExtension, allRegisters[`$${objectTransformed.rs}`], allRegisters[`$${objectTransformed.rt}`])) {
+		throw new Error(overflowMsg)
+	}
 
 	const operationResult = allRegisters[`$${objectTransformed.rs}`] - allRegisters[`$${objectTransformed.rt}`]
 
