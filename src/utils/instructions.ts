@@ -2,13 +2,11 @@ const instructionsOpCode = {
 	'001000': 'addi', //done
 	'001001': 'addiu', //done
 	'001100': 'andi', //in progress
-	'000111': 'bgtz',
-	'000100': 'beq',
-	'000001': 'bltz',
-	'000110': 'blez',
-	'000101': 'bne',
-	'000010': 'j',
-	'000011': 'jal',
+	'000111': 'bgtz', //done
+	'000100': 'beq', //done
+	'000001': 'bltz', //done
+	'000110': 'blez', //done
+	'000101': 'bne', //done
 	'100000': 'lb',
 	'100100': 'lbu',
 	'101111': 'lui',
@@ -88,12 +86,12 @@ function checkOverflow(op: string, value1: number, value2: number) {
 	let cont2 = value2
 
 	switch (op) {
-		case '+':
+		case '100000':
 			if ((cont1 + cont2) > maxValue || (cont1 + cont2) < minValue) {
 				return true
 			}
 			break
-		case '-':
+		case '100010':
 			if ((cont1 - cont2) > maxValue || (cont1 - cont2) < minValue) {
 				return true
 			} break
@@ -182,6 +180,16 @@ export function decodeInstruction(instruction: string, allRegisters: Record<stri
 				return addiu(instruction, allRegisters)
 			case '001100':
 				return andi(instruction, allRegisters)
+			case '000100':
+				return beq(instruction, allRegisters)
+			case '000101':
+				return bne(instruction, allRegisters)
+			case '000001':
+				return bltz(instruction, allRegisters)
+			case '000110':
+				return blez(instruction, allRegisters)
+			case '000111':
+				return bgtz(instruction, allRegisters)
 			default:
 				console.log('------------------------------')
 				allRegisters.pc -= 4
@@ -288,6 +296,67 @@ function andi(instruction: string, allRegisters: Record<string, any>) {
 	//const objectTransformed = objectToDecimal(divInstruction)
 
 }
+
+function beq(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+
+	if (allRegisters[`$${objectTransformed.rs}`] == allRegisters[`$${objectTransformed.rt}`]) {
+
+		allRegisters.pc += (objectTransformed.constant * 4)
+
+		allRegisters.pc -= 4
+	}
+}
+
+function bne(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+
+	if (allRegisters[`$${objectTransformed.rs}`] != allRegisters[`$${objectTransformed.rt}`]) {
+
+		allRegisters.pc += (objectTransformed.constant * 4)
+
+		allRegisters.pc -= 4
+	}
+}
+
+function bltz(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+
+	if (allRegisters[`$${objectTransformed.rs}`] < 0) {
+
+		allRegisters.pc += (objectTransformed.constant * 4)
+
+		allRegisters.pc -= 4
+	}
+}
+
+function blez(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+
+	if (allRegisters[`$${objectTransformed.rs}`] <= 0) {
+
+		allRegisters.pc += (objectTransformed.constant * 4)
+
+		allRegisters.pc -= 4
+	}
+}
+
+function bgtz(instruction: string, allRegisters: Record<string, any>) {
+	const divInstruction = divInstructionI(instruction)
+	const objectTransformed = objectToDecimal(divInstruction)
+
+	if (allRegisters[`$${objectTransformed.rs}`] > 0) {
+
+		allRegisters.pc += (objectTransformed.constant * 4)
+
+		allRegisters.pc -= 4
+	}
+}
+
 
 /* ----------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
